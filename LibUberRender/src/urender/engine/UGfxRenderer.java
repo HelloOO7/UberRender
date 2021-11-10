@@ -9,7 +9,7 @@ public class UGfxRenderer {
 		this.backend = backend;
 	}
 	
-	RenderingBackend getCore() {
+	public RenderingBackend getCore() {
 		return backend;
 	}
 }

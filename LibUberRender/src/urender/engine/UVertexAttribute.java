@@ -12,4 +12,8 @@ public class UVertexAttribute {
 	
 	public int offset;
 	public int elementCount;
+	
+	public int getSize() {
+		return format.sizeof * elementCount;
+	}
 }

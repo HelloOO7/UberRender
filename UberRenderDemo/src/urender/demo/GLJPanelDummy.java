@@ -20,15 +20,18 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 import javax.swing.SwingUtilities;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import urender.api.UDataType;
-import urender.api.UObjHandle;
 import urender.api.UPrimitiveType;
-import urender.api.UShaderType;
 import urender.api.backend.GLRenderingBackend;
 import urender.engine.UGfxRenderer;
 import urender.engine.UMesh;
 import urender.engine.UVertexAttribute;
+import urender.engine.shader.UUniformMatrix3;
+import urender.engine.shader.UUniformMatrix4;
+import urender.g3dio.OBJModelLoader;
+import urender.scenegraph.USceneNode;
 
 public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventListener {
 
@@ -37,6 +40,8 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 	private GLRenderingBackend backend = new GLRenderingBackend(null);
 
 	private static final UMesh RENDER_TEST_MESH = generateRenderTestMesh();
+
+	private static final USceneNode RENDER_TEST_MODEL = OBJModelLoader.createOBJModelSceneNode("urender/demo/model", "untitled_uv.obj");
 
 	protected static class DefaultCaps extends GLCapabilities {
 
@@ -69,14 +74,14 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		super(caps);
 		super.addGLEventListener(this);
 		animator = new FPSAnimator(this, 75);
-		
+
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				lastMX = e.getX();
 				lastMY = e.getY();
 			}
-			
+
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				lastMX = -1;
@@ -90,18 +95,16 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 				boolean right = SwingUtilities.isRightMouseButton(e);
 				if (lastMX != -1) {
 					if (right) {
-						tx -= (e.getX() - lastMX) / 1000f;
-					}
-					else {
+						tx -= (e.getX() - lastMX) / 1000f * tz;
+					} else {
 						ry -= (e.getX() - lastMX) / 100f;
 					}
 					lastMX = e.getX();
 				}
 				if (lastMY != -1) {
 					if (right) {
-						ty += (e.getY() - lastMY) / 1000f;
-					}
-					else {
+						ty += (e.getY() - lastMY) / 1000f * tz;
+					} else {
 						rx -= (e.getY() - lastMY) / 100f;
 					}
 					lastMY = e.getY();
@@ -113,7 +116,7 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		addMouseWheelListener(new MouseWheelListener() {
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				tz += e.getWheelRotation() / 10f;
+				tz += e.getWheelRotation() / 10f * tz;
 				display();
 			}
 		});
@@ -178,12 +181,8 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		return mesh;
 	}
 
-	private UObjHandle shaderProgram = new UObjHandle();
-	private UObjHandle worldMatrixUniform = new UObjHandle();
-	private UObjHandle projMatrixUniform = new UObjHandle();
-
 	private String readStringResource(String path) {
-		Scanner s = new Scanner(GLJPanelDummy.class.getResourceAsStream(path), StandardCharsets.UTF_8);
+		Scanner s = new Scanner(GLJPanelDummy.class.getClassLoader().getResourceAsStream(path), StandardCharsets.UTF_8);
 		String text = s.useDelimiter("\\A").next();
 		s.close();
 		return text;
@@ -193,37 +192,7 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 	public void init(GLAutoDrawable glad) {
 		backend.setGL(glad.getGL().getGL4());
 
-		UObjHandle vsh = new UObjHandle();
-		UObjHandle fsh = new UObjHandle();
-
-		backend.shaderInit(vsh, UShaderType.VERTEX);
-		backend.shaderInit(fsh, UShaderType.FRAGMENT);
-
-		backend.shaderCompileSource(vsh, readStringResource("/urender/demo/shader/DemoShader.vsh"));
-		backend.shaderCompileSource(fsh, readStringResource("/urender/demo/shader/DemoShader.fsh"));
-
-		backend.programInit(shaderProgram);
-		backend.programAttachShader(shaderProgram, vsh);
-		backend.programAttachShader(shaderProgram, fsh);
-		backend.programLink(shaderProgram);
-
 		GL4 gl = glad.getGL().getGL4();
-
-		int[] status = new int[1];
-		int hnd = shaderProgram.getValue(backend);
-		gl.glGetProgramiv(hnd, GL4.GL_LINK_STATUS, status, 0);
-		if (status[0] == GL4.GL_FALSE) {
-			int[] maxErrLen = new int[1];
-			gl.glGetProgramiv(hnd, GL4.GL_INFO_LOG_LENGTH, maxErrLen, 0);
-			if (maxErrLen[0] > 0) {
-				byte[] infoLog = new byte[maxErrLen[0]];
-				gl.glGetProgramInfoLog(hnd, maxErrLen[0], maxErrLen, 0, infoLog, 0);
-				throw new RuntimeException(new String(infoLog, StandardCharsets.US_ASCII));
-			}
-		}
-
-		backend.uniformLocationInit(shaderProgram, worldMatrixUniform, "UBR_WorldMatrix");
-		backend.uniformLocationInit(shaderProgram, projMatrixUniform, "UBR_ProjectionMatrix");
 
 		worldMtx.identity();
 
@@ -234,6 +203,11 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		gl.glDepthFunc(GL4.GL_LEQUAL);
 		gl.glClear(GL4.GL_DEPTH_BUFFER_BIT | GL4.GL_COLOR_BUFFER_BIT | GL4.GL_STENCIL_BUFFER_BIT);
 		gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT, GL2.GL_NICEST);
+
+		RENDER_TEST_MODEL.setup(new UGfxRenderer(backend));
+		RENDER_TEST_MODEL.uniforms.add(worldMtxU);
+		RENDER_TEST_MODEL.uniforms.add(projMtxU);
+		RENDER_TEST_MODEL.uniforms.add(normMtxU);
 	}
 
 	@Override
@@ -243,6 +217,11 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 
 	private Matrix4f worldMtx = new Matrix4f();
 	private Matrix4f projMtx = new Matrix4f();
+	private Matrix3f normMtx = new Matrix3f();
+
+	private UUniformMatrix4 worldMtxU = new UUniformMatrix4("UBR_WorldMatrix", worldMtx);
+	private UUniformMatrix4 projMtxU = new UUniformMatrix4("UBR_ProjectionMatrix", projMtx);
+	private UUniformMatrix3 normMtxU = new UUniformMatrix3("UBR_NormalMatrix", normMtx);
 
 	@Override
 	public void display(GLAutoDrawable glad) {
@@ -261,19 +240,16 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 
 		UGfxRenderer renderer = new UGfxRenderer(backend);
 
-		backend.programUse(shaderProgram);
-
-		projMtx.setPerspective((float) Math.toRadians(60f), getWidth() / (float) getHeight(), 0.0001f, 500f);
+		projMtx.setPerspective((float) Math.toRadians(60f), getWidth() / (float) getHeight(), 0.1f, 500f);
 		worldMtx.identity();
 		worldMtx.rotateYXZ(ry, rx, 0f);
 		worldMtx.translate(tx, ty, tz);
 		worldMtx.invert();
+		worldMtx.normal(normMtx);
 
-		backend.uniformMat4(worldMatrixUniform, worldMtx);
-		backend.uniformMat4(projMatrixUniform, projMtx);
-
-		RENDER_TEST_MESH.setup(renderer);
-		RENDER_TEST_MESH.draw(renderer);
+		/*RENDER_TEST_MESH.setData(renderer);
+		RENDER_TEST_MESH.draw(renderer);*/
+		RENDER_TEST_MODEL.drawAllModels(renderer);
 
 		backend.flush();
 	}

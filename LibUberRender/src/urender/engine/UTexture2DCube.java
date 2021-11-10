@@ -12,11 +12,11 @@ public class UTexture2DCube extends UTexture {
 	public List<UTexture3DFace> faces = new ArrayList<>();
 
 	@Override
-	protected void setup(UGfxRenderer rnd) {
+	public void setup(UGfxRenderer rnd) {
 		RenderingBackend core = rnd.getCore();
 
 		if (!__handle.isInitialized(core)) {
-			core.texInit(__handle, UTextureType.TEX2D);
+			core.texInit(__handle, UTextureType.TEX2D_CUBEMAP);
 		}
 
 		if (__handle.getAndResetForceUpload(core)) {
@@ -24,6 +24,11 @@ public class UTexture2DCube extends UTexture {
 				core.texUploadData2D(__handle, width, height, format, face.assignment, face.data);
 			}
 		}
+	}
+
+	@Override
+	public UTextureType getType() {
+		return UTextureType.TEX2D_CUBEMAP;
 	}
 
 	public static class UTexture3DFace {

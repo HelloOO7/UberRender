@@ -8,7 +8,10 @@ import urender.api.UPrimitiveType;
 import urender.api.UShaderType;
 import urender.api.UTextureFaceAssignment;
 import urender.api.UTextureFormat;
+import urender.api.UTextureMagFilter;
+import urender.api.UTextureMinFilter;
 import urender.api.UTextureType;
+import urender.api.UTextureWrap;
 
 public class GLAPITranslator implements APITranslator {
 
@@ -93,7 +96,15 @@ public class GLAPITranslator implements APITranslator {
 
 	@Override
 	public int getTextureType(UTextureType t) {
-		return t == UTextureType.TEX2D ? GL4.GL_TEXTURE_2D : GL4.GL_TEXTURE_3D;
+		switch (t) {
+			case TEX2D:
+				return GL4.GL_TEXTURE_2D;
+			case TEX2D_CUBEMAP:
+				return GL4.GL_TEXTURE_CUBE_MAP;
+			case TEX3D:
+				return GL4.GL_TEXTURE_3D;
+		}
+		return GL4.GL_INVALID_ENUM;
 	}
 
 	@Override
@@ -138,5 +149,46 @@ public class GLAPITranslator implements APITranslator {
 	@Override
 	public int getShaderType(UShaderType type) {
 		return type == UShaderType.FRAGMENT ? GL4.GL_FRAGMENT_SHADER : GL4.GL_VERTEX_SHADER;
+	}
+	
+	@Override
+	public int getTextureWrap(UTextureWrap wrap) {
+		switch (wrap) {
+			case CLAMP_TO_BORDER:
+				return GL4.GL_CLAMP_TO_BORDER;
+			case CLAMP_TO_EDGE:
+				return GL4.GL_CLAMP_TO_EDGE;
+			case REPEAT:
+				return GL4.GL_REPEAT;
+			case MIRRORED_REPEAT:
+				return GL4.GL_MIRRORED_REPEAT;
+		}
+		return GL4.GL_INVALID_ENUM;
+	}
+
+	@Override
+	public int getTextureMagFilter(UTextureMagFilter f) {
+		switch (f) {
+			case LINEAR:
+				return GL4.GL_LINEAR;
+			case NEAREST_NEIGHBOR:
+				return GL4.GL_NEAREST;
+		}
+		return GL4.GL_INVALID_ENUM;
+	}
+
+	@Override
+	public int getTextureMinFilter(UTextureMinFilter f) {
+		switch (f) {
+			case LINEAR_MIPMAP_LINEAR:
+			case LINEAR_MIPMAP_NEAREST:
+			case LINEAR:
+				return GL4.GL_LINEAR;
+			case NEAREST_MIPMAP_LINEAR:
+			case NEAREST_MIPMAP_NEAREST:
+			case NEAREST_NEIGHBOR:
+				return GL4.GL_NEAREST;
+		}
+		return GL4.GL_INVALID_ENUM;
 	}
 }

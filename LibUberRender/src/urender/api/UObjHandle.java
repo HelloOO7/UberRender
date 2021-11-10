@@ -8,6 +8,11 @@ public class UObjHandle {
 	private Map<Integer, Integer> values = new HashMap<>();
 	private Map<Integer, Boolean> forceUpload = new HashMap<>();
 	
+	public void reset() {
+		values.clear();
+		forceUpload.clear();
+	}
+	
 	public void forceUpload(RenderingBackend backend) {
 		forceUpload.put(backend.getIdent().hashCode(), true);
 	}

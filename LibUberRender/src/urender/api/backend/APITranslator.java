@@ -7,7 +7,10 @@ import urender.api.UPrimitiveType;
 import urender.api.UShaderType;
 import urender.api.UTextureFaceAssignment;
 import urender.api.UTextureFormat;
+import urender.api.UTextureMagFilter;
+import urender.api.UTextureMinFilter;
 import urender.api.UTextureType;
+import urender.api.UTextureWrap;
 
 public interface APITranslator {
 	public int getDataType(UDataType type, boolean unsigned);
@@ -20,4 +23,7 @@ public interface APITranslator {
 	public int getBufferTargetType(UBufferType bufType);
 	public int getBufferUsage(UBufferUsageHint usage);
 	public int getShaderType(UShaderType type);
+	public int getTextureWrap(UTextureWrap wrap);
+	public int getTextureMagFilter(UTextureMagFilter filter);
+	public int getTextureMinFilter(UTextureMinFilter filter);
 }

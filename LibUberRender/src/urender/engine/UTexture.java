@@ -2,6 +2,7 @@ package urender.engine;
 
 import urender.api.UObjHandle;
 import urender.api.UTextureFormat;
+import urender.api.UTextureType;
 
 public abstract class UTexture extends UGfxObject {
 	
@@ -12,5 +13,7 @@ public abstract class UTexture extends UGfxObject {
 	
 	public UTextureFormat format;
 
-	protected abstract void setup(UGfxRenderer rnd);
+	public abstract void setup(UGfxRenderer rnd);
+	
+	public abstract UTextureType getType();
 }

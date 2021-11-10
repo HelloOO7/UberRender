@@ -1,6 +1,6 @@
 package urender.engine;
 
-import java.nio.Buffer;
+import urender.engine.shader.UShaderProgram;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,11 +15,11 @@ public class UMesh extends UGfxObject {
 
 	public UPrimitiveType primitiveType;
 
-	public UObjHandle __iboHandle = new UObjHandle();
+	private UObjHandle __iboHandle = new UObjHandle();
 	public ByteBuffer indexBuffer;
 	public UDataType indexBufferFormat;
 
-	public UObjHandle __vboHandle = new UObjHandle();
+	private UObjHandle __vboHandle = new UObjHandle();
 	public ByteBuffer vertexBuffer;
 	public final List<UVertexAttribute> vertexAttributes = new ArrayList<>();
 
@@ -55,23 +55,21 @@ public class UMesh extends UGfxObject {
 		setupBuffer(core, UBufferType.VBO, __vboHandle, vertexBuffer);
 	}
 
-	public void draw(UGfxRenderer rnd) {
+	public void draw(UGfxRenderer rnd, UShaderProgram program) {
 		RenderingBackend core = rnd.getCore();
 
 		int stride = getOneVertexSize();
 
-		int index = 0;
 		for (UVertexAttribute a : vertexAttributes) {
-			core.bufferAttribPointer(__vboHandle, index, a.elementCount, a.format, a.unsigned, a.normalized, stride - (a.elementCount * a.format.sizeof), a.offset);
-			index++;
+			UObjHandle index = program.getAttributeLocation(rnd, a.shaderAttrName);
+			core.bufferAttribPointer(__vboHandle, index, a.elementCount, a.format, a.unsigned, a.normalized, stride, a.offset);
 		}
 
 		core.buffersDrawIndexed(__vboHandle, primitiveType, __iboHandle, indexBufferFormat, getIndexCount());
 		
-		index = 0;
 		for (UVertexAttribute a : vertexAttributes) {
+			UObjHandle index = program.getAttributeLocation(rnd, a.shaderAttrName);
 			core.bufferAttribDisable(__vboHandle, index);
-			index++;
 		}
 	}
 }
