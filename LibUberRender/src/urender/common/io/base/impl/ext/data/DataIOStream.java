@@ -21,10 +21,10 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	private ByteOrder order;
 	private IDataInterpreter interpreter;
 
-	private Stack<Integer> baseAddresses = new Stack<>();
-	protected int currentBase = 0;
+	private Stack<Long> baseAddresses = new Stack<>();
+	protected long currentBase = 0;
 
-	private Stack<Integer> checkpoints = new Stack<>();
+	private Stack<Long> checkpoints = new Stack<>();
 
 	public DataIOStream(IOStream strm) {
 		this(strm, IOCommon.DEFAULT_BYTE_ORDER);
@@ -48,6 +48,7 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 		this(FileStream.create(f));
 	}
 
+	@Override
 	public final void order(ByteOrder order) {
 		this.order = order;
 		interpreter = IOCommon.createInterpreterForByteOrder(order);
@@ -108,7 +109,11 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	}
 
 	public int readAddress() throws IOException {
-		return currentBase + readInt();
+		return (int)(currentBase + readInt());
+	}
+	
+	public long readAddress64() throws IOException {
+		return currentBase + readLong();
 	}
 
 	public String readStringWithAddress() throws IOException {
@@ -153,7 +158,7 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 		if (addr == 0) {
 			writeInt(addr);
 		} else {
-			writeInt(addr + currentBase);
+			writeInt((int)(addr + currentBase));
 		}
 	}
 
@@ -183,7 +188,7 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	}
 
 	@Override
-	public void seek(int position) throws IOException {
+	public void seek(long position) throws IOException {
 		if (position == 0 && currentBase > 0) {
 			throw new NullPointerException("Tried to seek to a null pointer ! !");
 		}
@@ -199,26 +204,26 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 		seek(readInt() + offset);
 	}
 
-	public void seekUnbased(int position) throws IOException {
+	public void seekUnbased(long position) throws IOException {
 		super.seek(position);
 	}
 
 	@Override
 	public int getPosition() throws IOException {
-		return super.getPosition() + currentBase;
+		return (int)(super.getPosition() + currentBase);
 	}
 
 	public int getPositionUnbased() throws IOException {
 		return super.getPosition();
 	}
 
-	public int getOffsetBase() {
+	public long getOffsetBase() {
 		return currentBase;
 	}
 
 	@Override
 	public int getLength() {
-		return super.getLength() + currentBase;
+		return (int)(super.getLength() + currentBase);
 	}
 
 	public void resetBase() {
@@ -227,7 +232,7 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 		}
 	}
 
-	public void setBase(int base) {
+	public void setBase(long base) {
 		if (base == currentBase) {
 			System.out.println("Warning: New base offset same as last. Sus.");
 		}
@@ -240,7 +245,7 @@ public class DataIOStream extends IOStreamWrapper implements DataInputEx, DataOu
 	}
 
 	public void checkpoint() throws IOException {
-		checkpoints.push(getPositionUnbased());
+		checkpoints.push((long)getPositionUnbased());
 	}
 
 	public void resetCheckpoint() throws IOException {

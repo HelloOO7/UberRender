@@ -15,5 +15,10 @@ public abstract class UTexture extends UGfxObject {
 
 	public abstract void setup(UGfxRenderer rnd);
 	
-	public abstract UTextureType getType();
+	public abstract UTextureType getTextureType();
+	
+	@Override
+	public UGfxObjectType getType() {
+		return UGfxObjectType.TEXTURE;
+	}
 }

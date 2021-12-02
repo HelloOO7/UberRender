@@ -4,6 +4,7 @@ import urender.api.UObjHandle;
 import urender.api.UShaderType;
 import urender.api.backend.RenderingBackend;
 import urender.engine.UGfxObject;
+import urender.engine.UGfxObjectType;
 import urender.engine.UGfxRenderer;
 
 public class UShader extends UGfxObject {
@@ -16,5 +17,10 @@ public class UShader extends UGfxObject {
 		RenderingBackend core = rnd.getCore();
 		core.shaderInit(__shObj, type);
 		core.shaderCompileSource(__shObj, shaderData);
+	}
+
+	@Override
+	public UGfxObjectType getType() {
+		return UGfxObjectType.SHADER;
 	}
 }

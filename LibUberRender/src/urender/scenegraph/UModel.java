@@ -10,7 +10,7 @@ import urender.engine.UTexture;
 import urender.engine.shader.UShaderProgram;
 import urender.engine.shader.UUniformList;
 
-public class UModel extends UGfxObject {
+public class UModel {
 
 	public final List<UMeshInstance> meshes = new ArrayList<>();
 

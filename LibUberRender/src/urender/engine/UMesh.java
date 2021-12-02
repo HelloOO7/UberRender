@@ -72,4 +72,9 @@ public class UMesh extends UGfxObject {
 			core.bufferAttribDisable(__vboHandle, index);
 		}
 	}
+
+	@Override
+	public UGfxObjectType getType() {
+		return UGfxObjectType.MESH;
+	}
 }

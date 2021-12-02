@@ -1,6 +1,7 @@
 package urender.common.io.structs;
 
 import urender.common.io.base.impl.ext.data.DataIOStream;
+import urender.common.io.util.StringIO;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,7 +10,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import urender.common.INamed;
-import urender.common.io.util.StringIO;
 
 /**
  * Class for writing various flavours of string tables.

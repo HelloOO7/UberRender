@@ -3,7 +3,7 @@ package urender.engine;
 import java.util.Collection;
 import java.util.Objects;
 
-public class UGfxObject {
+public abstract class UGfxObject {
 	public String name;
 	
 	public static <T extends UGfxObject> T find(Collection<T> collection, String name) {
@@ -14,4 +14,6 @@ public class UGfxObject {
 		}
 		return null;
 	}
+	
+	public abstract UGfxObjectType getType();
 }

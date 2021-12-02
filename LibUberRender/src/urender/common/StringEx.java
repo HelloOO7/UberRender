@@ -6,6 +6,9 @@ package urender.common;
 public class StringEx {
 
 	public static String deleteAllString(String str, String delete) {
+		if (delete.isEmpty()) {
+			return str;
+		}
 		StringBuilder sb = new StringBuilder(str);
 		int index;
 		int dellen = delete.length();
@@ -48,9 +51,9 @@ public class StringEx {
 	public static String replaceFast(String str, String toReplace, String replaceWith) {
 		StringBuilder sb = new StringBuilder(str);
 
-		int index;
+		int index = -1;
 		int replen = toReplace.length();
-		while ((index = sb.indexOf(toReplace)) != -1) {
+		while ((index = sb.indexOf(toReplace, index + 1)) != -1) {
 			sb.replace(index, index + replen, replaceWith);
 		}
 		return sb.toString();

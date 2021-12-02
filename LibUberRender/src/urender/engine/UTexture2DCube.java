@@ -27,7 +27,7 @@ public class UTexture2DCube extends UTexture {
 	}
 
 	@Override
-	public UTextureType getType() {
+	public UTextureType getTextureType() {
 		return UTextureType.TEX2D_CUBEMAP;
 	}
 

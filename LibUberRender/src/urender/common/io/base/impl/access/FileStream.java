@@ -49,7 +49,7 @@ public class FileStream extends RandomAccessFile implements IOStream {
 	}
 
 	@Override
-	public synchronized void seek(int position) throws IOException {
+	public synchronized void seek(long position) throws IOException {
 		super.seek(position);
 	}
 
@@ -65,7 +65,7 @@ public class FileStream extends RandomAccessFile implements IOStream {
 	}
 	
 	@Override
-	public synchronized void setLength(int length) throws IOException {
+	public synchronized void setLength(long length) throws IOException {
 		super.setLength(length);
 	}
 }

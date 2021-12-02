@@ -18,6 +18,18 @@ public class IOUtils {
 		arr[off + 0] = (byte) i;
 		return arr;
 	}
+	
+	public static byte[] integer16ToByteArrayBE(int i, byte[] arr, int off) {
+		arr[off + 0] = (byte) (i >>> 8);
+		arr[off + 1] = (byte) i;
+		return arr;
+	}
+	
+	public static byte[] integer16ToByteArrayLE(int i, byte[] arr, int off) {
+		arr[off + 1] = (byte) (i >>> 8);
+		arr[off + 0] = (byte) i;
+		return arr;
+	}
 
 	public static byte[] floatArrayToByteArray(float[] floats, int floatsOff, byte[] bytes, int bytesOff, int count) {
 		for (int fIdx = floatsOff, bIdx = bytesOff; fIdx < count && fIdx < floats.length; fIdx++, bIdx += 4) {
@@ -55,8 +67,8 @@ public class IOUtils {
 		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8) | ((b[offs + 2] & 0xFF) << 16) | ((b[offs + 3] & 0xFF) << 24);
 	}
 	
-	public static int byteArrayToInteger16LE(byte[] b, int offs) {
-		return (b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8);
+	public static short byteArrayToInteger16LE(byte[] b, int offs) {
+		return (short)((b[offs] & 0xFF) | ((b[offs + 1] & 0xFF) << 8));
 	}
 	
 	public static int byteArrayToInteger24LE(byte[] b, int offs) {

@@ -1,4 +1,4 @@
-package urender.g3dio;
+package urender.g3dio.generic;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;

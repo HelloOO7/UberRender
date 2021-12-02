@@ -1,8 +1,6 @@
 package urender.demo;
 
-import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL4;
-import com.jogamp.opengl.GL4bc;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLEventListener;
@@ -30,7 +28,7 @@ import urender.engine.UMesh;
 import urender.engine.UVertexAttribute;
 import urender.engine.shader.UUniformMatrix3;
 import urender.engine.shader.UUniformMatrix4;
-import urender.g3dio.OBJModelLoader;
+import urender.g3dio.generic.OBJModelLoader;
 import urender.scenegraph.USceneNode;
 
 public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventListener {
@@ -202,7 +200,6 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		gl.glEnable(GL4.GL_DEPTH_TEST);
 		gl.glDepthFunc(GL4.GL_LEQUAL);
 		gl.glClear(GL4.GL_DEPTH_BUFFER_BIT | GL4.GL_COLOR_BUFFER_BIT | GL4.GL_STENCIL_BUFFER_BIT);
-		gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT, GL2.GL_NICEST);
 
 		RENDER_TEST_MODEL.setup(new UGfxRenderer(backend));
 		RENDER_TEST_MODEL.uniforms.add(worldMtxU);

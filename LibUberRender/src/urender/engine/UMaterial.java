@@ -20,15 +20,15 @@ public class UMaterial extends UGfxObject {
 		RenderingBackend core = rnd.getCore();
 		UObjHandle texUnit = new UObjHandle();
 
-		int index = 0;
+		int texUnitIdx = 0;
 		for (UTextureMapper mapper : textureMappers) {
-			core.texUnitInit(texUnit, index);
+			core.texUnitInit(texUnit, texUnitIdx);
 
 			UTexture tex = UGfxObject.find(textures, mapper.textureName);
 
 			if (tex != null) {
-				core.texUnitSetTexture(texUnit, tex.getType(), tex.__handle);
-				core.texSetParams(tex.__handle, tex.getType(), mapper.wrapU, mapper.wrapV, mapper.magFilter, mapper.minFilter);
+				core.texUnitSetTexture(texUnit, tex.getTextureType(), tex.__handle);
+				core.texSetParams(tex.__handle, tex.getTextureType(), mapper.wrapU, mapper.wrapV, mapper.magFilter, mapper.minFilter);
 			}
 			else {
 				System.err.println("Could not find texture " + mapper.textureName);
@@ -37,8 +37,13 @@ public class UMaterial extends UGfxObject {
 			core.uniformSampler(shader.getUniformLocation(rnd, mapper.shaderVariableName), texUnit);
 
 			texUnit.reset();
-			index++;
+			texUnitIdx++;
 		}
+	}
+
+	@Override
+	public UGfxObjectType getType() {
+		return UGfxObjectType.MATERIAL;
 	}
 
 	public static class UTextureMapper {

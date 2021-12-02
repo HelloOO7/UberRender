@@ -1,8 +1,7 @@
-package urender.g3dio;
+package urender.g3dio.generic;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -126,7 +125,6 @@ public class OBJModelLoader {
 		USceneNode node = new USceneNode();
 
 		UModel model = new UModel();
-		model.name = filename;
 
 		String line;
 

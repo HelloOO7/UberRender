@@ -1,6 +1,7 @@
 package urender.engine.shader;
 
 import org.joml.Matrix4f;
+import urender.api.UObjHandle;
 import urender.engine.UGfxRenderer;
 
 public class UUniformMatrix4 extends UUniform {
@@ -21,7 +22,7 @@ public class UUniformMatrix4 extends UUniform {
 	}
 	
 	@Override
-	public void setData(UShaderProgram prog, UGfxRenderer rnd) {
-		rnd.getCore().uniformMat4(prog.getUniformLocation(rnd, name), val);
+	public void setData(UObjHandle loc, UGfxRenderer rnd) {
+		rnd.getCore().uniformMat4(loc, val);
 	}
 }

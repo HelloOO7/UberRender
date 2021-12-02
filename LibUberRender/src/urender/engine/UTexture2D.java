@@ -22,7 +22,7 @@ public class UTexture2D extends UTexture {
 	}
 
 	@Override
-	public UTextureType getType() {
+	public UTextureType getTextureType() {
 		return UTextureType.TEX2D;
 	}
 }

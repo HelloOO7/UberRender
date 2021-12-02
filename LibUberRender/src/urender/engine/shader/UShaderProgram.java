@@ -6,6 +6,7 @@ import java.util.Map;
 import urender.api.UObjHandle;
 import urender.api.backend.RenderingBackend;
 import urender.engine.UGfxObject;
+import urender.engine.UGfxObjectType;
 import urender.engine.UGfxRenderer;
 
 public class UShaderProgram extends UGfxObject {
@@ -56,5 +57,10 @@ public class UShaderProgram extends UGfxObject {
 	
 	public void use(UGfxRenderer rnd) {
 		rnd.getCore().programUse(__program);
+	}
+
+	@Override
+	public UGfxObjectType getType() {
+		return UGfxObjectType.PROGRAM;
 	}
 }

@@ -13,7 +13,7 @@ public class BufferedIOStream extends IOStreamWrapper {
 
 	private int bIdx = 0;
 	private int bIdxMax = 0;
-	private int bStmPos = 0;
+	private long bStmPos = 0;
 	private int streamLimit = 0;
 
 	private boolean bInitialized = false;
@@ -51,7 +51,7 @@ public class BufferedIOStream extends IOStreamWrapper {
 	private void flushBuffer() throws IOException {
 		if (bWritten) {
 			int amount = Math.max(bIdx, bIdxMax);
-			IOCommon.debugPrint("Flushing " + amount + " buf bytes at " + Integer.toHexString(bStmPos));
+			IOCommon.debugPrint("Flushing " + amount + " buf bytes at " + Long.toHexString(bStmPos));
 			writeBase(bStmPos, buffer, 0, amount);
 			bWritten = false;
 		}
@@ -67,12 +67,12 @@ public class BufferedIOStream extends IOStreamWrapper {
 		boolean isBufUnder = !bInitialized;
 		if (isBufOver || isBufUnder) {
 			if (isBufOver) {
-				IOCommon.debugPrint(this + " | Buffer size is over !! - " + Integer.toHexString(bStmPos));
+				IOCommon.debugPrint(this + " | Buffer size is over !! - " + Long.toHexString(bStmPos));
 				//Flush the existing buffer if exceeded
 				flushBuffer();
 				bStmPos += buffer.length;
 			} else {
-				IOCommon.debugPrint(this + " | Buffer size is under !! - " + Integer.toHexString(bStmPos));
+				IOCommon.debugPrint(this + " | Buffer size is under !! - " + Long.toHexString(bStmPos));
 				//No existing buffer - just read out the data and set the initialized flag
 				bStmPos = 0;
 				bInitialized = true;
@@ -124,9 +124,10 @@ public class BufferedIOStream extends IOStreamWrapper {
 				seekBase(pos);
 				readTotal += readBase(buffer, 0, buffer.length);
 				System.arraycopy(buffer, 0, b, off + availForReadBuf, leftToRead);
-				bStmPos = pos + buffer.length;
+				bStmPos = pos;
 				bIdx = leftToRead;
 				bIdxMax = bIdx;
+				IOCommon.debugPrint("Reading over !! NewPos " + Long.toHexString(bStmPos));
 				return readTotal;
 			} else {
 				//Otherwise, read the data straight from the stream and impl-seek to the resulting position (which will force-refill the buffer)
@@ -166,7 +167,7 @@ public class BufferedIOStream extends IOStreamWrapper {
 
 	@Override
 	public int getPosition() {
-		return bStmPos + bIdx;
+		return (int)(bStmPos + bIdx);
 	}
 
 	private int getPositionBase() throws IOException {
@@ -174,21 +175,21 @@ public class BufferedIOStream extends IOStreamWrapper {
 	}
 
 	@Override
-	public void seek(int position) throws IOException {
+	public void seek(long position) throws IOException {
 		if (position < 0) {
-			throw new EOFException("Negative seek offset! - " + Integer.toHexString(position));
+			throw new EOFException("Negative seek offset! - " + Long.toHexString(position));
 		}
 		if (bInitialized && position < bStmPos + buffer.length && position > bStmPos) {
-			IOCommon.debugPrint("Seeking bufferless to " + Integer.toHexString(position));
+			IOCommon.debugPrint("Seeking bufferless to " + Long.toHexString(position));
 			bIdxMax = Math.max(bIdx, bIdxMax);
-			bIdx = position - bStmPos;
+			bIdx = (int)(position - bStmPos);
 		} else {
 			flushBuffer();
 			bStmPos = position;
 			bIdx = 0;
 			bIdxMax = 0;
 			seekBase(position);
-			IOCommon.debugPrint("Seeking buffered to " + Integer.toHexString(position));
+			IOCommon.debugPrint("Seeking buffered to " + Long.toHexString(position));
 			bInitialized = true;
 			streamLimit = readBase(buffer, 0, buffer.length);
 		}
@@ -200,7 +201,7 @@ public class BufferedIOStream extends IOStreamWrapper {
 		return amount;
 	}
 
-	private void seekBase(int position) throws IOException {
+	private void seekBase(long position) throws IOException {
 		super.seek(position);
 	}
 
@@ -219,7 +220,7 @@ public class BufferedIOStream extends IOStreamWrapper {
 		return super.read(b, off, len);
 	}
 
-	private void writeBase(int where, byte[] b, int off, int len) throws IOException {
+	private void writeBase(long where, byte[] b, int off, int len) throws IOException {
 		seekBase(where);
 		IOCommon.debugPrint("Writing " + len + " bytes at " + Integer.toHexString(super.getPosition()));
 		super.write(b, off, len);
@@ -229,7 +230,7 @@ public class BufferedIOStream extends IOStreamWrapper {
 		return buffer;
 	}
 	
-	public int DEBUG_getBIdx() {
+	public long DEBUG_getBIdx() {
 		return bIdx;
 	}
 }
