@@ -5,19 +5,34 @@ import java.util.List;
 import java.util.Map;
 import urender.api.UObjHandle;
 import urender.api.backend.RenderingBackend;
+import urender.engine.UGfxEngineObject;
+import urender.engine.UGfxEngineObjectType;
 import urender.engine.UGfxObject;
-import urender.engine.UGfxObjectType;
 import urender.engine.UGfxRenderer;
 
-public class UShaderProgram extends UGfxObject {
+public class UShaderProgram extends UGfxEngineObject {
 
 	private UObjHandle __program = new UObjHandle();
 
 	private Map<String, UObjHandle> uniforms = new HashMap<>();
 	private Map<String, UObjHandle> attributes = new HashMap<>();
 
-	public String vertexShaderName;
-	public String fragmentShaderName;
+	String vertexShaderName;
+	String fragmentShaderName;
+	
+	public UShaderProgram(String name, String vshName, String fshName) {
+		this.name = name;
+		this.vertexShaderName = vshName;
+		this.fragmentShaderName = fshName;
+	}
+	
+	public String getVshName() {
+		return vertexShaderName;
+	}
+	
+	public String getFshName() {
+		return fragmentShaderName;
+	}
 
 	public UObjHandle getUniformLocation(UGfxRenderer rnd, String name) {
 		UObjHandle uniform = uniforms.get(name);
@@ -60,7 +75,7 @@ public class UShaderProgram extends UGfxObject {
 	}
 
 	@Override
-	public UGfxObjectType getType() {
-		return UGfxObjectType.PROGRAM;
+	public UGfxEngineObjectType getType() {
+		return UGfxEngineObjectType.PROGRAM;
 	}
 }

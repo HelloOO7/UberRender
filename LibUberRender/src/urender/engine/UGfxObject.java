@@ -4,7 +4,11 @@ import java.util.Collection;
 import java.util.Objects;
 
 public abstract class UGfxObject {
-	public String name;
+	protected String name;
+	
+	public String getName() {
+		return name;
+	}
 	
 	public static <T extends UGfxObject> T find(Collection<T> collection, String name) {
 		for (T t : collection) {
@@ -14,6 +18,4 @@ public abstract class UGfxObject {
 		}
 		return null;
 	}
-	
-	public abstract UGfxObjectType getType();
 }

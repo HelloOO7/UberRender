@@ -2,7 +2,6 @@ package urender.scenegraph;
 
 import java.util.ArrayList;
 import java.util.List;
-import urender.engine.UGfxObject;
 import urender.engine.UGfxRenderer;
 import urender.engine.UMaterial;
 import urender.engine.UMesh;
@@ -12,6 +11,9 @@ import urender.engine.UTexture;
 import urender.engine.shader.UUniformList;
 
 public class USceneNode {
+	public UNodeTransform transform = new UDefaultNodeTransform();
+	public UParentRelation parentRelation = new UDefaultParentRelation();
+	
 	public final UUniformList uniforms = new UUniformList();
 	
 	public final List<UModel> models = new ArrayList<>();
@@ -37,9 +39,9 @@ public class USceneNode {
 		}
 	}
 	
-	public void drawAllModels(UGfxRenderer rnd) {
+	public void drawAllModels(UGfxRenderer rnd, URenderQueue.URenderQueueNodeState state) {
 		for (UModel mdl : models) {
-			mdl.draw(rnd, meshes, materials, programs, uniforms, textures);
+			mdl.draw(rnd, meshes, materials, programs, state.uniforms, textures);
 		}
 	}
 }

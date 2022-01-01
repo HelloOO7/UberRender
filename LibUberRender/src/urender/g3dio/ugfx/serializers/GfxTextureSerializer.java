@@ -8,7 +8,9 @@ import urender.common.io.base.iface.DataInputEx;
 import urender.common.io.base.iface.DataOutputEx;
 import urender.engine.UTexture;
 import urender.engine.UTexture2D;
-import urender.g3dio.ugfx.adapters.IGfxResourceAdapter;
+import urender.engine.UTexture2DBuilder;
+import urender.engine.UTextureBuilder;
+import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
 public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 
@@ -20,8 +22,8 @@ public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 		UTextureFormat.RGBA8,
 		UTextureFormat.FLOAT32
 	};
-	
-	private static final ITextureSerializer[] TEX_SERIALIZERS = new ITextureSerializer[] {
+
+	private static final ITextureSerializer[] TEX_SERIALIZERS = new ITextureSerializer[]{
 		new Texture2DSerializer()
 	};
 
@@ -30,58 +32,85 @@ public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 		return "IMAG";
 	}
 
-	@Override
-	public void deserialize(DataInputEx in, IGfxResourceAdapter adapter) throws IOException {
-		ITextureSerializer texSerializer = null;
-
-		UTextureType type = TEX_TYPE_LOOKUP[in.readUnsignedByte()];
-
+	private ITextureSerializer decideSerializer(UTextureType type) throws IOException {
 		for (ITextureSerializer s : TEX_SERIALIZERS) {
 			if (s.getTexType() == type) {
-				texSerializer = s;
-				break;
+				return s;
 			}
 		}
+		throw new IOException("Could not de/serialize texture object of type " + type);
+	}
 
-		if (texSerializer == null) {
-			throw new IOException("Could not initialize texture object of type " + type);
-		} else {
-			UTexture tex = texSerializer.readTexture(in);
-			
-			tex.name = in.readString();
-			tex.width = in.readUnsignedShort();
-			tex.height = in.readUnsignedShort();
-			tex.format = TEX_FORMAT_LOOKUP[in.read()];
-			
-			adapter.loadObject(tex);
-		}
+	@Override
+	public void deserialize(DataInputEx in, IGfxResourceConsumer consumer) throws IOException {
+		UTextureType type = TEX_TYPE_LOOKUP[in.readUnsignedByte()];
+
+		UTextureBuilder tex = decideSerializer(type).readTexture(in);
+
+		tex
+			.setName(in.readString())
+			.setWidth(in.readUnsignedShort())
+			.setHeight(in.readUnsignedShort())
+			.setFormat(TEX_FORMAT_LOOKUP[in.read()]);
+
+		consumer.loadObject(tex.build());
 	}
 
 	@Override
 	public void serialize(UTexture tex, DataOutputEx out) throws IOException {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		out.write(IGfxResourceSerializer.findEnumIndex(TEX_TYPE_LOOKUP, tex.getTextureType()));
+		
+		decideSerializer(tex.getTextureType()).writeTexture(tex, out);
+		
+		out.writeString(tex.getName());
+		out.writeShorts(tex.width, tex.height);
+		out.write(IGfxResourceSerializer.findEnumIndex(TEX_FORMAT_LOOKUP, tex.format));
+	}
+
+	@Override
+	public boolean accepts(Object o) {
+		return o instanceof UTexture;
 	}
 
 	private static interface ITextureSerializer {
+
 		public UTextureType getTexType();
+
+		public UTextureBuilder readTexture(DataInputEx input) throws IOException;
 		
-		public UTexture readTexture(DataInputEx input) throws IOException;
+		public void writeTexture(UTexture tex, DataOutputEx output) throws IOException;
 	}
-	
+
 	private static class Texture2DSerializer implements ITextureSerializer {
 
 		@Override
-		public UTexture readTexture(DataInputEx input) throws IOException {
-			UTexture2D tex = new UTexture2D();
-			
-			tex.data = ByteBuffer.wrap(input.readBytes(input.readInt()));
-			
+		public UTextureBuilder readTexture(DataInputEx input) throws IOException {
+			UTexture2DBuilder tex = new UTexture2DBuilder();
+
+			tex.setData(ByteBuffer.wrap(input.readBytes(input.readInt())));
+
 			return tex;
 		}
 
 		@Override
 		public UTextureType getTexType() {
 			return UTextureType.TEX2D;
+		}
+
+		@Override
+		public void writeTexture(UTexture tex, DataOutputEx output) throws IOException {
+			ByteBuffer data = ((UTexture2D)tex).data;
+			byte[] bytes = null;
+			if (!data.hasArray()) {
+				bytes = new byte[data.capacity()];
+				data.rewind();
+				data.get(bytes);
+			}
+			else {
+				bytes = data.array();
+			}
+			output.writeInt(bytes.length);
+			output.write(bytes);
 		}
 	}
 }

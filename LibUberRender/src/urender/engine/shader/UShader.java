@@ -3,15 +3,37 @@ package urender.engine.shader;
 import urender.api.UObjHandle;
 import urender.api.UShaderType;
 import urender.api.backend.RenderingBackend;
-import urender.engine.UGfxObject;
-import urender.engine.UGfxObjectType;
+import urender.engine.UGfxEngineObject;
+import urender.engine.UGfxEngineObjectType;
 import urender.engine.UGfxRenderer;
 
-public class UShader extends UGfxObject {
+public class UShader extends UGfxEngineObject {
 	UObjHandle __shObj = new UObjHandle();
 	
-	public UShaderType type;
-	public String shaderData;
+	UShaderType type;
+	String shaderData;
+
+	public UShader(String name, UShaderType type, String source) {
+		this.name = name;
+		this.type = type;
+		this.shaderData = source;
+	}
+	
+	public static UShader createVertexShader(String name, String source) {
+		return new UShader(name, UShaderType.VERTEX, source);
+	}
+	
+	public static UShader createFragmentShader(String name, String source) {
+		return new UShader(name, UShaderType.FRAGMENT, source);
+	}
+	
+	public UShaderType getShaderType() {
+		return type;
+	}
+	
+	public String getShaderData() {
+		return shaderData;
+	}
 	
 	public void setup(UGfxRenderer rnd) {
 		RenderingBackend core = rnd.getCore();
@@ -20,7 +42,7 @@ public class UShader extends UGfxObject {
 	}
 
 	@Override
-	public UGfxObjectType getType() {
-		return UGfxObjectType.SHADER;
+	public UGfxEngineObjectType getType() {
+		return UGfxEngineObjectType.SHADER;
 	}
 }

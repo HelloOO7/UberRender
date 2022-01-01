@@ -17,16 +17,10 @@ public class IIOTextureLoader {
 		try {
 			BufferedImage img = ImageIO.read(in);
 
-			UTexture2D tex = new UTexture2D();
+			ByteBuffer data = ByteBuffer.allocateDirect(img.getWidth() * img.getHeight() * 4); //bpp32
+			convImageBufferRGBA(img, true, data);
 
-			tex.name = name;
-			tex.width = img.getWidth();
-			tex.height = img.getHeight();
-			tex.format = UTextureFormat.RGBA8;
-			tex.data = ByteBuffer.allocateDirect(tex.width * tex.height * 4); //bpp32
-			convImageBufferRGBA(img, true, tex.data);
-
-			return tex;
+			return new UTexture2D(name, img.getWidth(), img.getHeight(), UTextureFormat.RGBA8, data);
 		} catch (IOException ex) {
 			Logger.getLogger(IIOTextureLoader.class.getName()).log(Level.SEVERE, null, ex);
 		}

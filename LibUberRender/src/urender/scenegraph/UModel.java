@@ -10,7 +10,7 @@ import urender.engine.UTexture;
 import urender.engine.shader.UShaderProgram;
 import urender.engine.shader.UUniformList;
 
-public class UModel {
+public class UModel extends UGfxScenegraphObject {
 
 	public final List<UMeshInstance> meshes = new ArrayList<>();
 
@@ -22,8 +22,8 @@ public class UModel {
 			UMesh m = UGfxObject.find(meshList, inst.meshName);
 			UMaterial mat = UGfxObject.find(materialList, inst.materialName);
 			if (m != null && mat != null) {
-				//System.out.println("Rendering mesh " + m.name + " using material " + mat.name + " and shader " + mat.shaderProgramName);
-				UShaderProgram shader = UGfxObject.find(shaderList, mat.shaderProgramName);
+				//System.out.println("Rendering mesh " + m.getName() + " using material " + mat.getName() + " and shader " + mat.getShaderProgramName());
+				UShaderProgram shader = UGfxObject.find(shaderList, mat.getShaderProgramName());
 
 				if (shader != null) {
 					if (shader != lastShader) {
@@ -47,6 +47,11 @@ public class UModel {
 				}
 			}
 		}
+	}
+
+	@Override
+	public UGfxScenegraphObjectType getType() {
+		return UGfxScenegraphObjectType.MODEL;
 	}
 
 	public static class UMeshInstance {

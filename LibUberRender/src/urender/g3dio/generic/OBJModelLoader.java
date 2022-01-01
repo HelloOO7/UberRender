@@ -1,11 +1,14 @@
 package urender.g3dio.generic;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -16,17 +19,22 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import urender.api.UDataType;
 import urender.api.UPrimitiveType;
-import urender.api.UShaderType;
 import urender.common.StringEx;
-import urender.engine.UMaterial;
-import urender.engine.UMesh;
+import urender.engine.UMaterialBuilder;
+import urender.engine.UMeshBuilder;
+import urender.engine.UTextureMapperBuilder;
 import urender.engine.shader.UShader;
 import urender.engine.shader.UShaderProgram;
 import urender.engine.UVertexAttribute;
+import urender.engine.UVertexAttributeBuilder;
 import urender.scenegraph.UModel;
 import urender.scenegraph.USceneNode;
 
 public class OBJModelLoader {
+	
+	private static final String OBJ_DEFAULT_SHADER_NAME = "OBJDefaultShader";
+	private static final String OBJ_DEFAULT_SHADER_VERT_NAME = "OBJDefaultShader_V";
+	private static final String OBJ_DEFAULT_SHADER_FRAG_NAME = "OBJDefaultShader_F";
 
 	private static final String OBJ_DEFAULT_SHADER_VERT
 		= "#version 400 core\n"
@@ -66,77 +74,94 @@ public class OBJModelLoader {
 		+ "	FragColor = texture2D(Textures[0], FS_Texcoord0) * clamp(dot(FS_Normal, -vec3(0.0, 0.0, -1.0)), 0.0, 1.0);\n"
 		+ "}";
 
-	public static void loadMTL(String resourceRoot, String mtlFileName, USceneNode dest) {
-		Scanner s = new Scanner(OBJModelLoader.class.getClassLoader().getResourceAsStream(resourceRoot + "/" + mtlFileName));
+	private static void loadMTL(OBJFilesystemAccessor fs, String mtlFileName, USceneNode dest) {
+		Scanner s = new Scanner(fs.getStream(mtlFileName));
 
-		UMaterial mat = new UMaterial();
+		UMaterialBuilder matBuilder = new UMaterialBuilder();
+		String nowMatName = null;
+		int texIdx = 0;
 
 		String line;
 		while (s.hasNextLine()) {
 			line = s.nextLine();
 
 			String[] commands = StringEx.splitOnecharFastNoBlank(line, ' ');
-			int texIdx = 0;
+
 			if (commands.length > 0) {
 				switch (commands[0]) {
 					case "newmtl":
-						if (mat.name != null) {
-							dest.materials.add(mat);
-							mat = new UMaterial();
+						if (nowMatName != null) {
+							dest.materials.add(matBuilder.build());
+							matBuilder.reset();
 						}
-						mat.name = commands[1];
-						mat.shaderProgramName = "OBJDefaultShader";
+						nowMatName = commands[1];
+						matBuilder.setName(nowMatName);
+						matBuilder.setShaderProgramName(OBJ_DEFAULT_SHADER_NAME);
 						texIdx = 0;
 						break;
 					case "map_Kd":
-						UMaterial.UTextureMapper mapper = new UMaterial.UTextureMapper();
-						mapper.shaderVariableName = "Textures[" + (texIdx++) + "]";
-						mapper.meshUVSetName = "a_Texcoord0";
-						mapper.textureName = commands[1];
-						File fileTest = new File(mapper.textureName);
+						UTextureMapperBuilder mapperBld = new UTextureMapperBuilder();
+						mapperBld.setShaderVariableName("Textures[" + (texIdx++) + "]");
+						mapperBld.setMeshUVSetName("a_Texcoord0");
+
+						String textureName = commands[1];
+						mapperBld.setTextureName(textureName);
+						File fileTest = new File(textureName);
 						if (fileTest.exists()) {
 							try {
 								FileInputStream in = new FileInputStream(fileTest);
-								dest.textures.add(IIOTextureLoader.createIIOTexture(in, mapper.textureName));
+								dest.textures.add(IIOTextureLoader.createIIOTexture(in, textureName));
 								in.close();
 							} catch (IOException ex) {
 								Logger.getLogger(OBJModelLoader.class.getName()).log(Level.SEVERE, null, ex);
 							}
 						} else {
-							InputStream texStream = OBJModelLoader.class.getClassLoader().getResourceAsStream(resourceRoot + "/" + mapper.textureName);
+							InputStream texStream = fs.getStream(textureName);
 							if (texStream != null) {
-								dest.textures.add(IIOTextureLoader.createIIOTexture(texStream, mapper.textureName));
+								dest.textures.add(IIOTextureLoader.createIIOTexture(texStream, textureName));
 							} else {
-								System.err.println("Could not load texture " + mapper.textureName);
+								System.err.println("Could not load texture " + textureName);
 							}
 						}
-						mat.textureMappers.add(mapper);
+						matBuilder.addTextureMapper(mapperBld.build());
 						break;
 				}
 			}
 		}
 
-		if (mat.name != null) {
-			dest.materials.add(mat);
+		if (nowMatName != null) {
+			dest.materials.add(matBuilder.build());
 		}
 	}
-
+	
+	public static USceneNode createOBJModelSceneNode(File objFile) {
+		File parent = objFile.getAbsoluteFile().getParentFile();
+		String name = objFile.getName();
+		return createOBJModelSceneNode(new OBJDiskFilesystemAccessor(parent), name);
+	}
+	
 	public static USceneNode createOBJModelSceneNode(String resourceRoot, String filename) {
+		return createOBJModelSceneNode(new OBJRuntimeResourceFilesystemAccessor(resourceRoot), filename);
+	}
+
+	private static USceneNode createOBJModelSceneNode(OBJFilesystemAccessor fs, String filename) {
 		USceneNode node = new USceneNode();
 
 		UModel model = new UModel();
+		model.setName(filename);
 
 		String line;
 
 		UModel.UMeshInstance meshInst = new UModel.UMeshInstance();
-		UMesh mesh = new UMesh();
+		UMeshBuilder mesh = new UMeshBuilder();
+		String nowMeshName = null;
 
 		List<Vector3f> positions = new ArrayList<>();
 		List<Vector3f> normals = new ArrayList<>();
 		List<Vector2f> texcoords = new ArrayList<>();
 		List<OBJFacepoint> faces = new ArrayList<>();
 
-		Scanner scanner = new Scanner(OBJModelLoader.class.getClassLoader().getResourceAsStream(resourceRoot + "/" + filename));
+		Scanner scanner = new Scanner(fs.getStream(filename));
 
 		while (scanner.hasNextLine()) {
 			line = scanner.nextLine();
@@ -146,38 +171,40 @@ public class OBJModelLoader {
 				switch (commands[0]) {
 					case "mtllib":
 						//Set material file
-						loadMTL(resourceRoot, commands[1], node);
+						loadMTL(fs, commands[1], node);
 						break;
 					case "o":
 					case "g":
 						if (setupMesh(mesh, positions, normals, texcoords, faces)) {
-							node.meshes.add(mesh);
+							node.meshes.add(mesh.build());
 							model.meshes.add(meshInst);
 
-							mesh = new UMesh();
+							mesh.reset();
 							meshInst = new UModel.UMeshInstance();
 							faces.clear();
 						}
 						//Object or Mesh Group
-						mesh.name = commands[1];
-						meshInst.meshName = commands[1];
+						nowMeshName = commands[1];
+						mesh.setName(nowMeshName);
+						meshInst.meshName = nowMeshName;
 						break;
 					case "usemtl":
 						if (meshInst.materialName == null) {
 							meshInst.materialName = commands[1];
 						} else {
-							String oldMeshName = mesh.name;
+							String oldMeshName = nowMeshName;
 							if (setupMesh(mesh, positions, normals, texcoords, faces)) {
-								node.meshes.add(mesh);
+								node.meshes.add(mesh.build());
 								model.meshes.add(meshInst);
 
-								mesh = new UMesh();
+								mesh.reset();
 								meshInst = new UModel.UMeshInstance();
 								faces.clear();
 							}
-							mesh.name = oldMeshName + "_" + commands[1];
+							nowMeshName = oldMeshName + "_" + commands[1];
+							mesh.setName(nowMeshName);
 							meshInst.materialName = commands[1];
-							meshInst.meshName = mesh.name;
+							meshInst.meshName = nowMeshName;
 						}
 						break;
 					case "f":
@@ -233,29 +260,15 @@ public class OBJModelLoader {
 			}
 		}
 		if (setupMesh(mesh, positions, normals, texcoords, faces)) {
-			node.meshes.add(mesh);
+			node.meshes.add(mesh.build());
 			model.meshes.add(meshInst);
 		}
 		node.models.add(model);
+		
+		node.shaders.add(UShader.createVertexShader(OBJ_DEFAULT_SHADER_VERT_NAME, OBJ_DEFAULT_SHADER_VERT));
+		node.shaders.add(UShader.createFragmentShader(OBJ_DEFAULT_SHADER_FRAG_NAME, OBJ_DEFAULT_SHADER_FRAG));
 
-		UShader vertShader = new UShader();
-		vertShader.type = UShaderType.VERTEX;
-		vertShader.name = "OBJDefaultShader_V";
-		vertShader.shaderData = OBJ_DEFAULT_SHADER_VERT;
-		UShader fragShader = new UShader();
-		fragShader.type = UShaderType.FRAGMENT;
-		fragShader.name = "OBJDefaultShader_F";
-		fragShader.shaderData = OBJ_DEFAULT_SHADER_FRAG;
-
-		node.shaders.add(vertShader);
-		node.shaders.add(fragShader);
-
-		UShaderProgram program = new UShaderProgram();
-		program.name = "OBJDefaultShader";
-		program.fragmentShaderName = "OBJDefaultShader_V";
-		program.vertexShaderName = "OBJDefaultShader_F";
-
-		node.programs.add(program);
+		node.programs.add(new UShaderProgram(OBJ_DEFAULT_SHADER_NAME, OBJ_DEFAULT_SHADER_VERT_NAME, OBJ_DEFAULT_SHADER_FRAG_NAME));
 
 		scanner.close();
 		return node;
@@ -269,8 +282,8 @@ public class OBJModelLoader {
 		return new Vector2f(Float.parseFloat(commands[1]), Float.parseFloat(commands[2]));
 	}
 
-	private static boolean setupMesh(UMesh mesh, List<Vector3f> positions, List<Vector3f> normals, List<Vector2f> texcoords, List<OBJFacepoint> faces) {
-		mesh.primitiveType = UPrimitiveType.TRIS;
+	private static boolean setupMesh(UMeshBuilder mesh, List<Vector3f> positions, List<Vector3f> normals, List<Vector2f> texcoords, List<OBJFacepoint> faces) {
+		mesh.setPrimitiveType(UPrimitiveType.TRIS);
 		if (!positions.isEmpty()) {
 			OBJVertex vtx = new OBJVertex();
 			List<OBJVertex> vertices = new ArrayList<>();
@@ -300,13 +313,13 @@ public class OBJModelLoader {
 				indices.add(index);
 			}
 
-			mesh.indexBufferFormat = indices.size() > 0xFFFF ? UDataType.INT32 : indices.size() > 0xFF ? UDataType.INT16 : UDataType.INT8;
+			UDataType indexBufferFormat = indices.size() > 0xFFFF ? UDataType.INT32 : indices.size() > 0xFF ? UDataType.INT16 : UDataType.INT8;
 
-			mesh.indexBuffer = ByteBuffer.allocateDirect(mesh.indexBufferFormat.sizeof * indices.size());
-			mesh.indexBuffer.order(ByteOrder.LITTLE_ENDIAN);
+			ByteBuffer indexBuffer = ByteBuffer.allocateDirect(indexBufferFormat.sizeof * indices.size());
+			indexBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
 			for (Integer idx : indices) {
-				writeIBO(mesh.indexBufferFormat, mesh.indexBuffer, idx);
+				writeIBO(indexBufferFormat, indexBuffer, idx);
 			}
 
 			Vector3f dmyNormal = new Vector3f(0f, 0f, 1f);
@@ -324,40 +337,52 @@ public class OBJModelLoader {
 				vtxStride += Float.BYTES * 2;
 			}
 
-			mesh.vertexBuffer = ByteBuffer.allocateDirect(vtxStride * vertices.size());
-			mesh.vertexBuffer.order(ByteOrder.LITTLE_ENDIAN);
+			ByteBuffer vertexBuffer = ByteBuffer.allocateDirect(vtxStride * vertices.size());
+			vertexBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
-			UVertexAttribute pos = new UVertexAttribute();
-			pos.elementCount = 3;
-			pos.format = UDataType.FLOAT32;
-			pos.normalized = false;
-			pos.unsigned = false;
-			pos.shaderAttrName = "a_Position";
-			pos.offset = 0;
-			mesh.vertexAttributes.add(pos);
+			UVertexAttributeBuilder attrBld = new UVertexAttributeBuilder();
+
+			UVertexAttribute pos
+				= attrBld
+					.setShaderAttrName("a_Position")
+					.setOffset(0)
+					.setElementCount(3)
+					.setFormat(UDataType.FLOAT32)
+					.setNormalized(false)
+					.setTypeUnsigned(false)
+					.build();
+			mesh.addVertexAttribute(pos);
 
 			int size = pos.getSize();
 
 			if (hasNormal) {
-				UVertexAttribute nor = new UVertexAttribute();
-				nor.elementCount = 3;
-				nor.format = UDataType.FLOAT32;
-				nor.normalized = false;
-				nor.unsigned = false;
-				nor.shaderAttrName = "a_Normal";
-				nor.offset = size;
-				mesh.vertexAttributes.add(nor);
+				attrBld.reset();
+				
+				UVertexAttribute nor 
+					= attrBld
+					.setShaderAttrName("a_Normal")
+					.setOffset(size)
+					.setElementCount(3)
+					.setFormat(UDataType.FLOAT32)
+					.setNormalized(false)
+					.setTypeUnsigned(false)
+					.build();
+				mesh.addVertexAttribute(nor);
 				size += nor.getSize();
 			}
 			if (hasTexcoord) {
-				UVertexAttribute uv = new UVertexAttribute();
-				uv.elementCount = 2;
-				uv.format = UDataType.FLOAT32;
-				uv.normalized = false;
-				uv.unsigned = false;
-				uv.shaderAttrName = "a_Texcoord0";
-				uv.offset = size;
-				mesh.vertexAttributes.add(uv);
+				attrBld.reset();
+				
+				UVertexAttribute uv 
+					= attrBld
+					.setShaderAttrName("a_Texcoord0")
+					.setOffset(size)
+					.setElementCount(2)
+					.setFormat(UDataType.FLOAT32)
+					.setNormalized(false)
+					.setTypeUnsigned(false)
+					.build();
+				mesh.addVertexAttribute(uv);
 				size += uv.getSize();
 			}
 
@@ -366,20 +391,22 @@ public class OBJModelLoader {
 				n = v.normal == null ? dmyNormal : v.normal;
 				tc = v.texcoord == null ? dmyTexcoord : v.texcoord;
 
-				mesh.vertexBuffer.putFloat(v.position.x);
-				mesh.vertexBuffer.putFloat(v.position.y);
-				mesh.vertexBuffer.putFloat(v.position.z);
+				vertexBuffer.putFloat(v.position.x);
+				vertexBuffer.putFloat(v.position.y);
+				vertexBuffer.putFloat(v.position.z);
 
 				if (hasNormal) {
-					mesh.vertexBuffer.putFloat(v.normal.x);
-					mesh.vertexBuffer.putFloat(v.normal.y);
-					mesh.vertexBuffer.putFloat(v.normal.z);
+					vertexBuffer.putFloat(v.normal.x);
+					vertexBuffer.putFloat(v.normal.y);
+					vertexBuffer.putFloat(v.normal.z);
 				}
 				if (hasTexcoord) {
-					mesh.vertexBuffer.putFloat(v.texcoord.x);
-					mesh.vertexBuffer.putFloat(v.texcoord.y);
+					vertexBuffer.putFloat(v.texcoord.x);
+					vertexBuffer.putFloat(v.texcoord.y);
 				}
 			}
+
+			mesh.setIBO(indexBufferFormat, indexBuffer).setVBO(vertexBuffer);
 
 			return true;
 		}
@@ -433,5 +460,47 @@ public class OBJModelLoader {
 		public int posIndex = -1;
 		public int texcoordIndex = -1;
 		public int norIndex = -1;
+	}
+	
+	private static interface OBJFilesystemAccessor {
+		public InputStream getStream(String path);
+	}
+	
+	private static class OBJDiskFilesystemAccessor implements OBJFilesystemAccessor {
+
+		private final File relativeRoot;
+		
+		public OBJDiskFilesystemAccessor(File relativeRoot) {
+			this.relativeRoot = relativeRoot;
+		}
+		
+		@Override
+		public InputStream getStream(String path) {
+			File f = new File(path);
+			
+			if (!f.exists()) {
+				f = Paths.get(relativeRoot.getAbsolutePath(), path).toFile();
+			}
+			
+			try {
+				return new BufferedInputStream(new FileInputStream(f));
+			} catch (FileNotFoundException ex) {
+				return null;
+			}
+		}
+	}
+	
+	private static class OBJRuntimeResourceFilesystemAccessor implements OBJFilesystemAccessor {
+
+		private final String rootPath;
+		
+		public OBJRuntimeResourceFilesystemAccessor(String rootPath) {
+			this.rootPath = rootPath;
+		}
+		
+		@Override
+		public InputStream getStream(String path) {
+			return OBJModelLoader.class.getClassLoader().getResourceAsStream(rootPath + "/" + path);
+		}
 	}
 }

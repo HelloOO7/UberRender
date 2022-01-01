@@ -13,23 +13,22 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
 import javax.swing.SwingUtilities;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import urender.api.UDataType;
-import urender.api.UPrimitiveType;
+import org.joml.Vector3f;
 import urender.api.backend.GLRenderingBackend;
 import urender.engine.UGfxRenderer;
-import urender.engine.UMesh;
-import urender.engine.UVertexAttribute;
 import urender.engine.shader.UUniformMatrix3;
 import urender.engine.shader.UUniformMatrix4;
-import urender.g3dio.generic.OBJModelLoader;
+import urender.g3dio.ugfx.UGfxResource;
+import urender.scenegraph.UCamera;
+import urender.scenegraph.UCameraLookAtOrbit;
+import urender.scenegraph.URenderQueue;
+import urender.scenegraph.UScene;
+import urender.scenegraph.io.USceneNodeGfxResourceAdapter;
 import urender.scenegraph.USceneNode;
+import urender.scenegraph.io.UScenegraphGfxResourceLoader;
 
 public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventListener {
 
@@ -37,9 +36,12 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 
 	private GLRenderingBackend backend = new GLRenderingBackend(null);
 
-	private static final UMesh RENDER_TEST_MESH = generateRenderTestMesh();
-
-	private static final USceneNode RENDER_TEST_MODEL = OBJModelLoader.createOBJModelSceneNode("urender/demo/model", "untitled_uv.obj");
+	//private static final USceneNode RENDER_TEST_MODEL = OBJModelLoader.createOBJModelSceneNode("urender/demo/model", "untitled_uv.obj");
+	private static final USceneNode RENDER_TEST_MODEL = new USceneNode();
+	
+	static {
+		UGfxResource.loadResourceClasspath("urender/demo/model/Demo.gfx", UScenegraphGfxResourceLoader.getInstance(), new USceneNodeGfxResourceAdapter(RENDER_TEST_MODEL));
+	}
 
 	protected static class DefaultCaps extends GLCapabilities {
 
@@ -119,73 +121,7 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 			}
 		});
 	}
-
-	static UMesh generateRenderTestMesh() {
-		UMesh mesh = new UMesh();
-		mesh.name = "RenderDemo";
-		mesh.primitiveType = UPrimitiveType.TRIS;
-		mesh.indexBufferFormat = UDataType.INT8;
-		UVertexAttribute pos = new UVertexAttribute();
-		pos.elementCount = 3;
-		pos.format = UDataType.FLOAT32;
-		pos.normalized = false;
-		pos.unsigned = false;
-		pos.offset = 0;
-		pos.shaderAttrName = "a_Position";
-		mesh.vertexAttributes.add(pos);
-
-		mesh.vertexBuffer = ByteBuffer.allocateDirect(6 * 3 * Float.BYTES);
-		mesh.vertexBuffer.order(ByteOrder.LITTLE_ENDIAN);
-
-		mesh.vertexBuffer.putFloat(-.5f);
-		mesh.vertexBuffer.putFloat(1f);
-		mesh.vertexBuffer.putFloat(-.5f);
-
-		mesh.vertexBuffer.putFloat(-.5f);
-		mesh.vertexBuffer.putFloat(0f);
-		mesh.vertexBuffer.putFloat(0f);
-
-		mesh.vertexBuffer.putFloat(.5f);
-		mesh.vertexBuffer.putFloat(0f);
-		mesh.vertexBuffer.putFloat(-.5f);
-
-		mesh.vertexBuffer.putFloat(.5f);
-		mesh.vertexBuffer.putFloat(0f);
-		mesh.vertexBuffer.putFloat(-.5f);
-
-		mesh.vertexBuffer.putFloat(.5f);
-		mesh.vertexBuffer.putFloat(2f);
-		mesh.vertexBuffer.putFloat(-.5f);
-
-		mesh.vertexBuffer.putFloat(-.5f);
-		mesh.vertexBuffer.putFloat(1f);
-		mesh.vertexBuffer.putFloat(-.5f);
-
-		mesh.vertexBuffer.flip();
-
-		/*mesh.vertexBuffer.putFloat(.5f);
-		mesh.vertexBuffer.putFloat(1f);
-		mesh.vertexBuffer.putFloat(-.5f);*/
-		mesh.indexBuffer = ByteBuffer.allocateDirect(6);
-		mesh.indexBuffer.order(ByteOrder.LITTLE_ENDIAN);
-		mesh.indexBuffer.put((byte) 0);
-		mesh.indexBuffer.put((byte) 1);
-		mesh.indexBuffer.put((byte) 2);
-		mesh.indexBuffer.put((byte) 3);
-		mesh.indexBuffer.put((byte) 4);
-		mesh.indexBuffer.put((byte) 5);
-		mesh.indexBuffer.flip();
-
-		return mesh;
-	}
-
-	private String readStringResource(String path) {
-		Scanner s = new Scanner(GLJPanelDummy.class.getClassLoader().getResourceAsStream(path), StandardCharsets.UTF_8);
-		String text = s.useDelimiter("\\A").next();
-		s.close();
-		return text;
-	}
-
+	
 	@Override
 	public void init(GLAutoDrawable glad) {
 		backend.setGL(glad.getGL().getGL4());
@@ -202,15 +138,22 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		gl.glClear(GL4.GL_DEPTH_BUFFER_BIT | GL4.GL_COLOR_BUFFER_BIT | GL4.GL_STENCIL_BUFFER_BIT);
 
 		RENDER_TEST_MODEL.setup(new UGfxRenderer(backend));
-		RENDER_TEST_MODEL.uniforms.add(worldMtxU);
-		RENDER_TEST_MODEL.uniforms.add(projMtxU);
-		RENDER_TEST_MODEL.uniforms.add(normMtxU);
+		
+		rootScene.addGlobalUniform(worldMtxU);
+		rootScene.addGlobalUniform(projMtxU);
+		rootScene.addGlobalUniform(normMtxU);
+		
+		rootScene.addChild(RENDER_TEST_MODEL);
+		rootScene.camera = camera;
 	}
 
 	@Override
 	public void dispose(GLAutoDrawable glad) {
 
 	}
+	
+	private UScene rootScene = new UScene();
+	private UCameraLookAtOrbit camera = new UCameraLookAtOrbit();
 
 	private Matrix4f worldMtx = new Matrix4f();
 	private Matrix4f projMtx = new Matrix4f();
@@ -236,17 +179,25 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		gl.glClear(GL4.GL_DEPTH_BUFFER_BIT | GL4.GL_COLOR_BUFFER_BIT);
 
 		UGfxRenderer renderer = new UGfxRenderer(backend);
+		
+		camera.FOV = (float) Math.toRadians(60f);
+		camera.aspect = getWidth() / (float) getHeight();
+		camera.zNear = 0.1f;
+		camera.zFar = 500f;
 
-		projMtx.setPerspective((float) Math.toRadians(60f), getWidth() / (float) getHeight(), 0.1f, 500f);
-		worldMtx.identity();
-		worldMtx.rotateYXZ(ry, rx, 0f);
-		worldMtx.translate(tx, ty, tz);
-		worldMtx.invert();
-		worldMtx.normal(normMtx);
-
-		/*RENDER_TEST_MESH.setData(renderer);
-		RENDER_TEST_MESH.draw(renderer);*/
-		RENDER_TEST_MODEL.drawAllModels(renderer);
+		camera.rotation.set(rx, ry, 0f);
+		camera.target.set(0f, 0f, 0f);
+		camera.postTranslation.set(tx, ty, tz);
+				
+		URenderQueue queue = rootScene.calcRenderQueue();
+		
+		for (URenderQueue.URenderQueueNodeState state : queue.queue()) {
+			worldMtx.set(state.viewMatrix);
+			worldMtx.mul(state.modelMatrix);
+			state.modelMatrix.normal(normMtx);
+			projMtx.set(state.projectionMatrix);
+			state.node.drawAllModels(renderer, state);
+		}
 
 		backend.flush();
 	}

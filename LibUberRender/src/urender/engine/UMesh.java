@@ -11,24 +11,49 @@ import urender.api.UObjHandle;
 import urender.api.UPrimitiveType;
 import urender.api.backend.RenderingBackend;
 
-public class UMesh extends UGfxObject {
+public class UMesh extends UGfxEngineObject {
 
-	public UPrimitiveType primitiveType;
+	UPrimitiveType primitiveType;
 
 	private UObjHandle __iboHandle = new UObjHandle();
-	public ByteBuffer indexBuffer;
-	public UDataType indexBufferFormat;
+	ByteBuffer indexBuffer;
+	UDataType indexBufferFormat;
 
 	private UObjHandle __vboHandle = new UObjHandle();
-	public ByteBuffer vertexBuffer;
-	public final List<UVertexAttribute> vertexAttributes = new ArrayList<>();
+	ByteBuffer vertexBuffer;
+	
+	final List<UVertexAttribute> vertexAttributes = new ArrayList<>();
 
+	public UPrimitiveType getPrimitiveType() {
+		return primitiveType;
+	}
+	
 	public int getOneVertexSize() {
 		int size = 0;
 		for (UVertexAttribute a : vertexAttributes) {
 			size += a.format.sizeof * a.elementCount;
 		}
 		return size;
+	}
+	
+	public int getVtxAttrCount() {
+		return vertexAttributes.size();
+	}
+	
+	public UVertexAttribute getVtxAttr(int index) {
+		return vertexAttributes.get(index);
+	}
+	
+	public UDataType getIBOFormat() {
+		return indexBufferFormat;
+	}
+	
+	public ByteBuffer getIBO() {
+		return indexBuffer;
+	}
+	
+	public ByteBuffer getVBO() {
+		return vertexBuffer;
 	}
 
 	public int getVertexCount() {
@@ -74,7 +99,7 @@ public class UMesh extends UGfxObject {
 	}
 
 	@Override
-	public UGfxObjectType getType() {
-		return UGfxObjectType.MESH;
+	public UGfxEngineObjectType getType() {
+		return UGfxEngineObjectType.MESH;
 	}
 }

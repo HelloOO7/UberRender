@@ -1,6 +1,7 @@
 package urender.engine.shader;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import urender.api.UObjHandle;
 import urender.engine.UGfxRenderer;
 
@@ -15,6 +16,15 @@ public class UUniformList extends ArrayList<UUniform> {
 		}
 	}
 
+	@Override
+	public boolean addAll(Collection<? extends UUniform> uniforms) {
+		boolean retval = false;
+		for (UUniform u : uniforms) {
+			retval |= add(u);
+		}
+		return retval;
+	}
+	
 	@Override
 	public boolean add(UUniform uniform) {
 		if (!contains(uniform)) {

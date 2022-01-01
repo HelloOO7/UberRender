@@ -3,15 +3,39 @@ package urender.engine;
 import urender.api.UDataType;
 
 public class UVertexAttribute {
-	public String shaderAttrName;
+	String shaderAttrName;
 	
-	public boolean unsigned;
-	public boolean normalized;
+	boolean unsigned;
+	boolean normalized;
 	
-	public UDataType format;
+	UDataType format;
 	
-	public int offset;
-	public int elementCount;
+	int offset;
+	int elementCount;
+	
+	public String getShaderAttrName() {
+		return shaderAttrName;
+	}
+	
+	public boolean getTypeIsUnsigned() {
+		return unsigned;
+	}
+	
+	public boolean isNormalized() {
+		return normalized;
+	}
+	
+	public UDataType getFormat() {
+		return format;
+	}
+	
+	public int getOffset() {
+		return offset;
+	}
+	
+	public int getElementCount() {
+		return elementCount;
+	}
 	
 	public int getSize() {
 		return format.sizeof * elementCount;

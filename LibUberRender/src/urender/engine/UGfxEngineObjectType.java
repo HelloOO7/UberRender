@@ -1,6 +1,6 @@
 package urender.engine;
 
-public enum UGfxObjectType {
+public enum UGfxEngineObjectType {
 	MESH,
 	TEXTURE,
 	MATERIAL,
