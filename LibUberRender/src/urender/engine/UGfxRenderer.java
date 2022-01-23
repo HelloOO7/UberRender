@@ -3,37 +3,66 @@ package urender.engine;
 import urender.api.backend.RenderingBackend;
 
 public class UGfxRenderer {
+
 	private final RenderingBackend backend;
-	
-	private UFramebuffer framebuffer;
-	private UFramebuffer renderTargetSource;
-	
-	public UGfxRenderer(RenderingBackend backend) {
+
+	private UFramebuffer gbufferFramebuffer;
+	private UFramebuffer forwardFramebuffer;
+
+	private UMaterialDrawLayer.ShadingMethod nowShadingMethod = null;
+
+	private final UDrawState drawState = new UDrawState();
+
+	public UGfxRenderer(RenderingBackend backend, UFramebuffer gbufferFramebuffer, UFramebuffer forwardFramebuffer) {
 		this.backend = backend;
+		this.gbufferFramebuffer = gbufferFramebuffer;
+		this.forwardFramebuffer = forwardFramebuffer;
 	}
-	
-	public void setFramebuffer(UFramebuffer fb) {
-		this.framebuffer = fb;
-		if (fb != null) {
-			fb.setup(this);
+
+	public boolean isShadingMethodCurrent(UMaterialDrawLayer.ShadingMethod method) {
+		return nowShadingMethod == null || method == nowShadingMethod;
+	}
+
+	public UDrawState getDrawState() {
+		return drawState;
+	}
+
+	public void changeShadingMethod(UMaterialDrawLayer.ShadingMethod method) {
+		if (method != nowShadingMethod) {
+			if (method != null) {
+				switch (method) {
+					case DEFERRED:
+						gbufferFramebuffer.setup(this);
+						break;
+					case FORWARD:
+						forwardFramebuffer.setup(this);
+						break;
+				}
+			}
+			else {
+				backend.framebufferResetScreen();
+			}
+			nowShadingMethod = method;
 		}
-		else {
-			backend.framebufferResetScreen();
-		}
 	}
-	
-	public void setRenderSourceFramebuffer(UFramebuffer fb) {
-		this.renderTargetSource = fb;
+
+	public void setAllFramebufferResolution(int width, int height) {
+		gbufferFramebuffer.setAllRenderTargetResolution(width, height);
+		forwardFramebuffer.setAllRenderTargetResolution(width, height);
 	}
-	
-	public UFramebuffer getRenderSourceFramebuffer() {
-		return renderTargetSource;
-	}
-	
+
 	public void setScreenFramebuffer() {
-		setFramebuffer(null);
+		backend.framebufferResetScreen();
 	}
-	
+
+	public URenderTarget findRenderTarget(String name) {
+		URenderTarget rt = gbufferFramebuffer.findRenderTarget(name);
+		if (rt == null) {
+			rt = forwardFramebuffer.findRenderTarget(name);
+		}
+		return rt;
+	}
+
 	public RenderingBackend getCore() {
 		return backend;
 	}

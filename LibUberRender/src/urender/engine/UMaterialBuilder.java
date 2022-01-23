@@ -8,6 +8,11 @@ public class UMaterialBuilder extends UGfxObjectBuilder<UMaterial> {
 		return this;
 	}
 	
+	public UMaterialBuilder setDrawLayer(UMaterialDrawLayer layer) {
+		material.drawLayer = layer;
+		return this;
+	}
+	
 	public UMaterialBuilder addTextureMapper(UTextureMapper mapper) {
 		material.textureMappers.add(mapper);
 		return this;

@@ -10,6 +10,7 @@ import urender.engine.UTexture;
 import urender.engine.UTexture2D;
 import urender.engine.UTexture2DBuilder;
 import urender.engine.UTextureBuilder;
+import urender.g3dio.ugfx.UGfxDataInput;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
 public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
@@ -42,7 +43,7 @@ public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 	}
 
 	@Override
-	public void deserialize(DataInputEx in, IGfxResourceConsumer consumer) throws IOException {
+	public void deserialize(UGfxDataInput in, IGfxResourceConsumer consumer) throws IOException {
 		UTextureType type = TEX_TYPE_LOOKUP[in.readUnsignedByte()];
 
 		UTextureBuilder tex = decideSerializer(type).readTexture(in);

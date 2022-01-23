@@ -20,11 +20,15 @@ import org.joml.Matrix4f;
 import urender.api.UFramebufferAttachment;
 import urender.api.UTextureFormat;
 import urender.api.backend.GLRenderingBackend;
+import urender.engine.UDrawSources;
+import urender.engine.UDrawState;
 import urender.engine.UFramebuffer;
 import urender.engine.UGfxRenderer;
 import urender.engine.UMaterial;
+import urender.engine.UMaterialDrawLayer;
 import urender.engine.URenderTarget;
 import urender.engine.shader.UUniform;
+import urender.engine.shader.UUniformFloat;
 import urender.engine.shader.UUniformMatrix3;
 import urender.engine.shader.UUniformMatrix4;
 import urender.g3dio.ugfx.UGfxResource;
@@ -43,11 +47,15 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 
 	//private static final USceneNode RENDER_TEST_MODEL = OBJModelLoader.createOBJModelSceneNode("urender/demo/model", "untitled_uv.obj");
 	private static final USceneNode RENDER_TEST_MODEL = new USceneNode();
+	private static final USceneNode TORUS_MODEL = new USceneNode();
+	private static final USceneNode GBUFFER_COMPOSE_MODEL = new USceneNode();
 	private static final USceneNode FILL_SCREEN_MODEL = new USceneNode();
 
 	static {
 		//UGfxResource.loadResourceClasspath("urender/demo/model/Demo.gfx", UScenegraphGfxResourceLoader.getInstance(), new USceneNodeGfxResourceAdapter(RENDER_TEST_MODEL));
 		UGfxResource.loadResourceFile(new File("Demo.gfx"), UScenegraphGfxResourceLoader.getInstance(), new USceneNodeGfxResourceAdapter(RENDER_TEST_MODEL));
+		UGfxResource.loadResourceFile(new File("Torus.gfx"), UScenegraphGfxResourceLoader.getInstance(), new USceneNodeGfxResourceAdapter(TORUS_MODEL));
+		UGfxResource.loadResourceFile(new File("GBufferComposeQuad.gfx"), UScenegraphGfxResourceLoader.getInstance(), new USceneNodeGfxResourceAdapter(GBUFFER_COMPOSE_MODEL));
 		UGfxResource.loadResourceFile(new File("FillScreenQuad.gfx"), UScenegraphGfxResourceLoader.getInstance(), new USceneNodeGfxResourceAdapter(FILL_SCREEN_MODEL));
 	}
 
@@ -144,13 +152,13 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		gl.glDepthFunc(GL4.GL_LEQUAL);
 		gl.glClear(GL4.GL_DEPTH_BUFFER_BIT | GL4.GL_COLOR_BUFFER_BIT | GL4.GL_STENCIL_BUFFER_BIT);
 
-		RENDER_TEST_MODEL.setup(new UGfxRenderer(backend));
-
 		rootScene.addGlobalUniform(worldMtxU);
 		rootScene.addGlobalUniform(projMtxU);
 		rootScene.addGlobalUniform(normMtxU);
+		rootScene.addGlobalUniform(time);
 
 		rootScene.addChild(RENDER_TEST_MODEL);
+		rootScene.addChild(TORUS_MODEL);
 		rootScene.camera = camera;
 	}
 
@@ -169,58 +177,72 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 	private UUniformMatrix4 worldMtxU = new UUniformMatrix4("UBR_WorldMatrix", worldMtx);
 	private UUniformMatrix4 projMtxU = new UUniformMatrix4("UBR_ProjectionMatrix", projMtx);
 	private UUniformMatrix3 normMtxU = new UUniformMatrix3("UBR_NormalMatrix", normMtx);
+	private UUniformFloat time = new UUniformFloat("time", 0f);
 
+	//The g-buffer pass renders to these targets
 	private URenderTarget rtPosition = new URenderTarget(0, "PositionTexture", UFramebufferAttachment.COLOR, UTextureFormat.RGBA16F);
 	private URenderTarget rtNormal = new URenderTarget(1, "NormalTexture", UFramebufferAttachment.COLOR, UTextureFormat.RGBA16F);
 	private URenderTarget rtAlbedo = new URenderTarget(2, "AlbedoTexture", UFramebufferAttachment.COLOR, UTextureFormat.RGBA8);
 	private URenderTarget rtDepth = new URenderTarget(0, "DepthTexture", UFramebufferAttachment.DEPTH_STENCIL, UTextureFormat.DEPTH24_STENCIL8);
 
-	private UFramebuffer framebuffer = new UFramebuffer(rtPosition, rtDepth, rtNormal, rtAlbedo);
+	private UFramebuffer framebufferGbuffer = new UFramebuffer(rtPosition, rtDepth, rtNormal, rtAlbedo);
 
-	private void clearViewport(GL4 gl) {
+	//The forward-rendered pass renders directly to this target
+	//The deferred-rendered pass should render to it prior with setting gl_FragDepth to the depth texture value
+	private URenderTarget rtForward = new URenderTarget(0, "ForwardSurface", UFramebufferAttachment.COLOR, UTextureFormat.RGBA8);
+	private UFramebuffer framebufferForward = new UFramebuffer(rtForward, rtDepth); //shared depth buffer for both deferred and forward shading
+
+	//A fullscreen quad should blit ForwardSurface to the screen, possibly through a postprocessing shader
+	private void clearViewport(GL4 gl, boolean keepDepth) {
 		gl.glViewport(0, 0, getWidth(), getHeight());
 
 		gl.glClearColor(0f, 0.5f, 0.9f, 1f);
-		gl.glClearDepthf(1f);
+		if (!keepDepth) {
+			gl.glClearDepthf(1f);
+		}
 
 		gl.glDepthMask(true);
 		gl.glColorMask(true, true, true, true);
 		gl.glEnable(GL4.GL_DEPTH_TEST);
 		gl.glDepthFunc(GL4.GL_LEQUAL);
-		gl.glClear(GL4.GL_DEPTH_BUFFER_BIT | GL4.GL_COLOR_BUFFER_BIT);
+		gl.glEnable(GL4.GL_CULL_FACE);
+		gl.glCullFace(GL4.GL_BACK);
+		gl.glClear((keepDepth ? 0 : GL4.GL_DEPTH_BUFFER_BIT) | GL4.GL_COLOR_BUFFER_BIT);
 	}
 
-	private void drawScene(UGfxRenderer rnd) {
+	private void drawScenePass(UGfxRenderer rnd, URenderQueue queue) {
+		for (URenderQueue.URenderQueueMeshState state : queue.queue()) {
+			projMtx.set(state.nodeState.projectionMatrix);
+			worldMtx.set(state.nodeState.viewMatrix);
+			worldMtx.mul(state.nodeState.modelMatrix);
+			state.nodeState.modelMatrix.normal(normMtx);
+
+			state.draw(rnd);
+		}
+	}
+
+	private void drawScene(GL4 gl, UGfxRenderer rnd) {
 		URenderQueue queue = rootScene.calcRenderQueue();
 
-		for (URenderQueue.URenderQueueNodeState state : queue.queue()) {
-			worldMtx.set(state.viewMatrix);
-			worldMtx.mul(state.modelMatrix);
-			state.modelMatrix.normal(normMtx);
-			for (UMaterial mat : state.node.materials) {
-				for (UUniform uniform : mat.shaderParams) {
-					if (uniform.getName().equals("time")) {
-						uniform.set((float) (System.currentTimeMillis() % 86400000));
-					}
-				}
-			}
-			projMtx.set(state.projectionMatrix);
-			state.node.drawAllModels(rnd, state);
+		for (UDrawSources drawSources : queue.drawSources()) {
+			drawSources.setup(rnd);
 		}
+
+		rnd.changeShadingMethod(UMaterialDrawLayer.ShadingMethod.DEFERRED);
+		clearViewport(gl, false);
+		drawScenePass(rnd, queue);
+		rnd.changeShadingMethod(UMaterialDrawLayer.ShadingMethod.FORWARD);
+		clearViewport(gl, true);
+		gl.glDepthMask(false);
+		GBUFFER_COMPOSE_MODEL.drawHeadless(rnd); //blit deferred framebuffer to forward surface
+		gl.glDepthMask(true);
+		gl.glEnable(GL4.GL_BLEND);
+		gl.glBlendFunc(GL4.GL_SRC_ALPHA, GL4.GL_ONE_MINUS_SRC_ALPHA);
+		drawScenePass(rnd, queue);
 	}
 
 	@Override
 	public void display(GLAutoDrawable glad) {
-		GL4 gl = glad.getGL().getGL4();
-
-		UGfxRenderer renderer = new UGfxRenderer(backend);
-
-		framebuffer.setAllRenderTargetResolution(getWidth(), getHeight());
-
-		renderer.setFramebuffer(framebuffer);
-
-		clearViewport(gl);
-
 		camera.FOV = (float) Math.toRadians(60f);
 		camera.aspect = getWidth() / (float) getHeight();
 		camera.zNear = 0.1f;
@@ -230,16 +252,21 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		camera.target.set(0f, 0f, 0f);
 		camera.postTranslation.set(tx, ty, tz);
 		
-		drawScene(renderer);
+		time.set((float)(System.currentTimeMillis() % 86400000));
 
-		renderer.setScreenFramebuffer();
-		renderer.setRenderSourceFramebuffer(framebuffer);
+		GL4 gl = glad.getGL().getGL4();
 
-		clearViewport(gl);
+		UGfxRenderer renderer = new UGfxRenderer(backend, framebufferGbuffer, framebufferForward);
 
-		FILL_SCREEN_MODEL.setup(renderer);
-		FILL_SCREEN_MODEL.drawAllModels(renderer, new URenderQueue.URenderQueueNodeState(null));
-		
+		renderer.setAllFramebufferResolution(getWidth(), getHeight());
+
+		drawScene(gl, renderer);
+
+		renderer.changeShadingMethod(null);
+
+		clearViewport(gl, false);
+		FILL_SCREEN_MODEL.drawHeadless(renderer);
+
 		backend.flush();
 	}
 

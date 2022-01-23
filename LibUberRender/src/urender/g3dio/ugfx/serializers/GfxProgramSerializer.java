@@ -4,6 +4,7 @@ import java.io.IOException;
 import urender.common.io.base.iface.DataInputEx;
 import urender.common.io.base.iface.DataOutputEx;
 import urender.engine.shader.UShaderProgram;
+import urender.g3dio.ugfx.UGfxDataInput;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
 public class GfxProgramSerializer implements IGfxResourceSerializer<UShaderProgram> {
@@ -14,7 +15,7 @@ public class GfxProgramSerializer implements IGfxResourceSerializer<UShaderProgr
 	}
 	
 	@Override
-	public void deserialize(DataInputEx in, IGfxResourceConsumer consumer) throws IOException {
+	public void deserialize(UGfxDataInput in, IGfxResourceConsumer consumer) throws IOException {
 		consumer.loadObject(new UShaderProgram(in.readString(), in.readString(), in.readString()));
 	}
 

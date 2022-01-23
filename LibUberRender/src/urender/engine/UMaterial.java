@@ -12,6 +12,8 @@ public class UMaterial extends UGfxEngineObject {
 
 	String shaderProgramName;
 
+	UMaterialDrawLayer drawLayer = new UMaterialDrawLayer(UMaterialDrawLayer.ShadingMethod.DEFERRED, 0);
+
 	public final UUniformList shaderParams = new UUniformList();
 
 	final List<UTextureMapper> textureMappers = new ArrayList<>();
@@ -21,6 +23,14 @@ public class UMaterial extends UGfxEngineObject {
 
 	public String getShaderProgramName() {
 		return shaderProgramName;
+	}
+
+	public UMaterialDrawLayer getDrawLayer() {
+		return drawLayer;
+	}
+
+	public void setDrawLayer(UMaterialDrawLayer drawLayer) {
+		this.drawLayer = drawLayer;
 	}
 
 	public void bindShaderProgram(UShaderProgram program) {
@@ -46,7 +56,7 @@ public class UMaterial extends UGfxEngineObject {
 
 		int texUnitIdx = 0;
 		for (UTextureMapper mapper : textureMappers) {
-			URenderTarget rt = rnd.getRenderSourceFramebuffer() == null ? null : rnd.getRenderSourceFramebuffer().findRenderTarget(mapper.textureName);
+			URenderTarget rt = rnd.findRenderTarget(mapper.textureName);
 			UTexture tex = rt == null ? UGfxObject.find(textures, mapper.textureName) : null;
 
 			if (tex != null || rt != null) {
@@ -61,8 +71,14 @@ public class UMaterial extends UGfxEngineObject {
 						core.texSetParams(tex.__handle, tex.getTextureType(), mapper.wrapU, mapper.wrapV, mapper.magFilter, mapper.minFilter);
 					} else if (rt != null) {
 						//Use RenderTexture
-						core.texUnitSetTexture(texUnit, UTextureType.TEX2D, rt.__textureHandle);
-						core.texSetParams(rt.__textureHandle, UTextureType.TEX2D, mapper.wrapU, mapper.wrapV, mapper.magFilter, mapper.minFilter);
+						if (rt.__textureHandle.isInitialized(core)) {
+							//System.out.println("Binding RenderTexture " + rt.name + " to material " + name + " mapper " + mapper.shaderVariableName);
+							core.texUnitSetTexture(texUnit, UTextureType.TEX2D, rt.__textureHandle);
+							core.texSetParams(rt.__textureHandle, UTextureType.TEX2D, mapper.wrapU, mapper.wrapV, mapper.magFilter, mapper.minFilter);
+						}
+						else {
+							System.err.println("RenderTarget RenderTexture not initialized! RT: " + rt.name);
+						}
 					}
 
 					core.uniformSampler(loc, texUnit);

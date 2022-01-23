@@ -55,11 +55,13 @@ public class UGfxResource {
 	}
 
 	public static void loadResource(ReadableStream stream, IGfxResourceLoader loader, IGfxResourceConsumer consumer) throws IOException {
-		DataInStream in = new DataInStream(stream);
+		UGfxDataInput in = new UGfxDataInput(stream);
 
 		GfxBinaryHeader header = new GfxBinaryHeader(in);
 
 		header.verify();
+		
+		in.setVersion(header.revision);
 
 		String tag;
 
@@ -139,9 +141,7 @@ public class UGfxResource {
 				throw new InvalidMagicException("UGfxResource binary data signature mismatched.");
 			}
 
-			if (revision < UGfxFormatRevisions.CURRENT) {
-				throw new IOException("UGfxResource binary file version " + revision + " out of date.");
-			} else if (revision > UGfxFormatRevisions.CURRENT) {
+			if (revision > UGfxFormatRevisions.CURRENT) {
 				throw new IOException("UGfxResource binary file version " + revision + " too new.");
 			}
 		}

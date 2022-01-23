@@ -279,7 +279,7 @@ public class GLRenderingBackend implements RenderingBackend {
 		int loc = gl.glGetUniformLocation(program.getValue(this), name);
 		uniform.initialize(this, loc);
 		if (loc == -1) {
-			System.err.println("Unresolved uniform: " + name + " for program " + program.getValue(this));
+			System.err.println("Unused uniform: " + name + " for program " + program.getValue(this));
 		}
 	}
 

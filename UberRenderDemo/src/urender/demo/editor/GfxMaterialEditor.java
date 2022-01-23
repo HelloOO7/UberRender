@@ -22,6 +22,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.text.PlainDocument;
 import urender.api.UShaderType;
 import urender.engine.UMaterial;
+import urender.engine.UMaterialDrawLayer;
 import urender.engine.UTexture;
 import urender.engine.UTextureMapper;
 import urender.engine.shader.UShader;
@@ -112,7 +113,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 			public boolean remove(UShader value) {
 				String name = value.getName();
 				for (ShaderProgramEditHandle pe : programListModel) {
-					if (pe.program.getFshName().equals(name) || pe.program.getVshName().equals(name)) {
+					if (Objects.equals(pe.program.getFshName(), name) || Objects.equals(pe.program.getVshName(), name)) {
 						EditorUIUtility.showInfoMessage(GfxMaterialEditor.this, "Shader in use", "Please detach this shader from any programs in order to remove it.");
 						return false;
 					}
@@ -166,6 +167,8 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 					shaderProgramSelect.setModel(handle.programSelect);
 					uniformListModel.setList(handle.material.shaderParams);
 					textureMapperBox.setModel(handle.texMapperListModel);
+					shadingLayer.setModel(handle.shadingMethodModel);
+					shadingPriority.setModel(handle.shadingPriorityModel);
 					addRemoveTextureMapper.bind(textureMapperBox, handle.texMapperListModel, new AddRemoveItemButtons.Handler<UTextureMapper>() {
 						@Override
 						public UTextureMapper add() {
@@ -348,6 +351,11 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
         uniformList = new javax.swing.JList<>();
         addRemoveShaderParam = new urender.demo.editor.AddRemoveItemButtons();
         uniformEditorHolder = new javax.swing.JScrollPane();
+        jPanel14 = new javax.swing.JPanel();
+        shadingLayerLabel = new javax.swing.JLabel();
+        shadingLayer = new javax.swing.JComboBox<>();
+        shadingPriorityLabel = new javax.swing.JLabel();
+        shadingPriority = new javax.swing.JSpinner();
         jPanel5 = new javax.swing.JPanel();
         jPanel6 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -493,6 +501,41 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
         );
 
         jTabbedPane2.addTab("Shader parameters", jPanel10);
+
+        shadingLayerLabel.setText("Shading layer");
+
+        shadingPriorityLabel.setText("Priority");
+
+        javax.swing.GroupLayout jPanel14Layout = new javax.swing.GroupLayout(jPanel14);
+        jPanel14.setLayout(jPanel14Layout);
+        jPanel14Layout.setHorizontalGroup(
+            jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel14Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(shadingLayerLabel)
+                    .addComponent(shadingPriorityLabel))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(shadingLayer, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(shadingPriority, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(95, Short.MAX_VALUE))
+        );
+        jPanel14Layout.setVerticalGroup(
+            jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel14Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(shadingLayerLabel)
+                    .addComponent(shadingLayer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(shadingPriorityLabel)
+                    .addComponent(shadingPriority, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(269, Short.MAX_VALUE))
+        );
+
+        jTabbedPane2.addTab("Layering", jPanel14);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -852,6 +895,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel13;
+    private javax.swing.JPanel jPanel14;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -880,6 +924,10 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
     private javax.swing.JLabel shaderProgramSelectLabel;
     private javax.swing.JComboBox<ShaderEditHandle> shaderSelectF;
     private javax.swing.JComboBox<ShaderEditHandle> shaderSelectV;
+    private javax.swing.JComboBox<UMaterialDrawLayer.ShadingMethod> shadingLayer;
+    private javax.swing.JLabel shadingLayerLabel;
+    private javax.swing.JSpinner shadingPriority;
+    private javax.swing.JLabel shadingPriorityLabel;
     private javax.swing.JLabel texPreviewHolder;
     private javax.swing.JList<TextureEditHandle> textureList;
     private javax.swing.JComboBox<TextureMapperEditHandle> textureMapperBox;

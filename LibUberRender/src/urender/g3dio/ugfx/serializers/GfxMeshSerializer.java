@@ -10,6 +10,7 @@ import urender.engine.UMesh;
 import urender.engine.UMeshBuilder;
 import urender.engine.UVertexAttribute;
 import urender.engine.UVertexAttributeBuilder;
+import urender.g3dio.ugfx.UGfxDataInput;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
 public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
@@ -56,7 +57,7 @@ public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
 	}
 
 	@Override
-	public void deserialize(DataInputEx in, IGfxResourceConsumer consumer) throws IOException {
+	public void deserialize(UGfxDataInput in, IGfxResourceConsumer consumer) throws IOException {
 		UMeshBuilder bld = new UMeshBuilder();
 		bld.setName(in.readString());
 		bld.setPrimitiveType(PRIMITIVE_TYPE_LOOKUP[in.read()]);

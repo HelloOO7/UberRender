@@ -32,4 +32,8 @@ public class UUniformList extends ArrayList<UUniform> {
 		}
 		return false;
 	}
+	
+	public boolean valuesMatch(UUniformList other) {
+		return this.containsAll(other) && other.containsAll(this);
+	}
 }

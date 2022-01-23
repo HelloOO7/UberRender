@@ -5,6 +5,7 @@ import urender.api.UShaderType;
 import urender.common.io.base.iface.DataInputEx;
 import urender.common.io.base.iface.DataOutputEx;
 import urender.engine.shader.UShader;
+import urender.g3dio.ugfx.UGfxDataInput;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
 public class GfxShaderSerializer implements IGfxResourceSerializer<UShader> {
@@ -17,7 +18,7 @@ public class GfxShaderSerializer implements IGfxResourceSerializer<UShader> {
 	}
 	
 	@Override
-	public void deserialize(DataInputEx in, IGfxResourceConsumer consumer) throws IOException {
+	public void deserialize(UGfxDataInput in, IGfxResourceConsumer consumer) throws IOException {
 		UShaderType type = SHA_TYPE_LOOKUP[in.read()];
 
 		consumer.loadObject(new UShader(in.readString(), type, in.readPaddedString(in.readInt())));

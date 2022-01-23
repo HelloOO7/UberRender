@@ -1,7 +1,10 @@
 package urender.scenegraph;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import urender.engine.UDrawSources;
+import urender.engine.UDrawState;
 import urender.engine.UGfxRenderer;
 import urender.engine.UMaterial;
 import urender.engine.UMesh;
@@ -24,24 +27,23 @@ public class USceneNode {
 	public final List<UMaterial> materials = new ArrayList<>();
 	public final List<UShader> shaders = new ArrayList<>();
 	
-	public void setup(UGfxRenderer rnd) {
-		for (UMesh m : meshes) {
-			m.setup(rnd);
+	public void drawHeadless(UGfxRenderer rnd) {
+		URenderQueue.URenderQueueNodeState nodeState = new URenderQueue.URenderQueueNodeState(this);
+		nodeState.drawSources.setup(rnd);
+		List<URenderQueue.URenderQueueMeshState> meshStates = new ArrayList<>();
+		for (UModel mdl : models) {
+			for (UModel.UMeshInstance meshInst : mdl.meshes) {
+				URenderQueue.URenderQueueMeshState meshState = new URenderQueue.URenderQueueMeshState(nodeState, meshInst);
+				meshStates.add(meshState);
+			}
 		}
-		for (UTexture t : textures) {
-			t.setup(rnd);
-		}
-		for (UShader shader : shaders) {
-			shader.setup(rnd);
-		}
-		for (UShaderProgram program : programs) {
-			program.setup(rnd, shaders);
+		Collections.sort(meshStates);
+		for (URenderQueue.URenderQueueMeshState ms : meshStates) {
+			ms.draw(rnd);
 		}
 	}
 	
-	public void drawAllModels(UGfxRenderer rnd, URenderQueue.URenderQueueNodeState state) {
-		for (UModel mdl : models) {
-			mdl.draw(rnd, meshes, materials, programs, state.uniforms, textures);
-		}
+	public UDrawSources getDrawSources() {
+		return new UDrawSources(meshes, materials, shaders, programs, uniforms, textures);
 	}
 }

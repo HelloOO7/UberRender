@@ -24,7 +24,8 @@ public class GfxConverterDemo {
 	}
 
 	public static void main(String[] args) {
-		doConvModel("untitled_uv.obj", "Demo.gfx");
-		doConvModel("FillScreenQuad.obj", "FillScreenQuad.gfx");
+		//doConvModel("untitled_uv.obj", "Demo.gfx");
+		//doConvModel("FillScreenQuad.obj", "FillScreenQuad.gfx");
+		doConvModel("Torus.obj", "Torus.gfx");
 	}
 }

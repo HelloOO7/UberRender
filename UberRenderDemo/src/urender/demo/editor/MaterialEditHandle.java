@@ -1,8 +1,10 @@
 package urender.demo.editor;
 
-import javax.swing.JComboBox;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.ListModel;
+import javax.swing.SpinnerNumberModel;
 import urender.engine.UMaterial;
+import urender.engine.UMaterialDrawLayer;
 import urender.engine.UTextureMapper;
 
 public class MaterialEditHandle implements IEditHandle<UMaterial> {
@@ -12,6 +14,10 @@ public class MaterialEditHandle implements IEditHandle<UMaterial> {
 	public final MultiComboBoxModel<ShaderProgramEditHandle> programSelect;
 
 	public final SynchronizedComboBoxModel<UTextureMapper, TextureMapperEditHandle> texMapperListModel;
+	
+	public final DefaultComboBoxModel<UMaterialDrawLayer.ShadingMethod> shadingMethodModel = new DefaultComboBoxModel<>();
+	
+	public final SpinnerNumberModel shadingPriorityModel = new SpinnerNumberModel(0, 0, 65535, 1);
 
 	public MaterialEditHandle(UMaterial material, ListModel<ShaderProgramEditHandle> programList, ListModel<TextureEditHandle> textureListModel) {
 		this.material = material;
@@ -23,6 +29,10 @@ public class MaterialEditHandle implements IEditHandle<UMaterial> {
 				return new TextureMapperEditHandle(element, textureListModel, this);
 			}
 		};
+		for (UMaterialDrawLayer.ShadingMethod sm : UMaterialDrawLayer.ShadingMethod.values()) {
+			shadingMethodModel.addElement(sm);
+		}
+		shadingMethodModel.setSelectedItem(material.getDrawLayer().method);
 	}
 
 	@Override
@@ -37,6 +47,7 @@ public class MaterialEditHandle implements IEditHandle<UMaterial> {
 		} else {
 			material.bindShaderProgram(null);
 		}
+		material.setDrawLayer(new UMaterialDrawLayer((UMaterialDrawLayer.ShadingMethod)shadingMethodModel.getSelectedItem(), shadingPriorityModel.getNumber().intValue()));
 	}
 
 	@Override

@@ -4,6 +4,7 @@ import urender.g3dio.ugfx.serializers.*;
 import java.io.IOException;
 import urender.common.io.base.iface.DataInputEx;
 import urender.common.io.base.iface.DataOutputEx;
+import urender.g3dio.ugfx.UGfxDataInput;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 import urender.scenegraph.UModel;
 
@@ -15,7 +16,7 @@ public class GfxModelSerializer implements IGfxResourceSerializer<UModel> {
 	}
 	
 	@Override
-	public void deserialize(DataInputEx in, IGfxResourceConsumer consumer) throws IOException {
+	public void deserialize(UGfxDataInput in, IGfxResourceConsumer consumer) throws IOException {
 		UModel model = new UModel();
 		model.setName(in.readString());
 		
