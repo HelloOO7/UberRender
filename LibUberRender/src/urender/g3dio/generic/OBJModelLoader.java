@@ -20,6 +20,7 @@ import org.joml.Vector3f;
 import urender.api.UDataType;
 import urender.api.UPrimitiveType;
 import urender.common.StringEx;
+import urender.common.fs.FSUtil;
 import urender.engine.UMaterialBuilder;
 import urender.engine.UMeshBuilder;
 import urender.engine.UTextureMapperBuilder;
@@ -102,11 +103,11 @@ public class OBJModelLoader {
 					case "map_Kd":
 						UTextureMapperBuilder mapperBld = new UTextureMapperBuilder();
 						mapperBld.setShaderVariableName("Textures[" + (texIdx++) + "]");
-						mapperBld.setMeshUVSetName("a_Texcoord0");
 
-						String textureName = commands[1];
+						String texturePath = commands[1];
+						String textureName = FSUtil.getFileNameWithoutExtension(texturePath);
 						mapperBld.setTextureName(textureName);
-						File fileTest = new File(textureName);
+						File fileTest = new File(texturePath);
 						if (fileTest.exists()) {
 							try {
 								FileInputStream in = new FileInputStream(fileTest);
@@ -116,11 +117,11 @@ public class OBJModelLoader {
 								Logger.getLogger(OBJModelLoader.class.getName()).log(Level.SEVERE, null, ex);
 							}
 						} else {
-							InputStream texStream = fs.getStream(textureName);
+							InputStream texStream = fs.getStream(texturePath);
 							if (texStream != null) {
 								dest.textures.add(IIOTextureLoader.createIIOTexture(texStream, textureName));
 							} else {
-								System.err.println("Could not load texture " + textureName);
+								System.err.println("Could not load texture " + texturePath);
 							}
 						}
 						matBuilder.addTextureMapper(mapperBld.build());

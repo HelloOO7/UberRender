@@ -46,7 +46,8 @@ public class UGfxResource {
 	}
 	
 	public static void writeResourceFile(File f, IGfxResourceLoader loader, IGfxResourceProvider provider) {
-		try (WriteableStream out = FileStream.create(f)) {
+		try (FileStream out = FileStream.create(f)) {
+			out.setLength(0);
 			writeResource(out, loader, provider);
 		} catch (IOException ex) {
 			Logger.getLogger(UGfxResource.class.getName()).log(Level.SEVERE, null, ex);

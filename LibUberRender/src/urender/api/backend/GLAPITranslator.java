@@ -4,6 +4,7 @@ import com.jogamp.opengl.GL4;
 import urender.api.UBufferType;
 import urender.api.UBufferUsageHint;
 import urender.api.UDataType;
+import urender.api.UFramebufferAttachment;
 import urender.api.UPrimitiveType;
 import urender.api.UShaderType;
 import urender.api.UTextureFaceAssignment;
@@ -50,13 +51,19 @@ public class GLAPITranslator implements APITranslator {
 	@Override
 	public int getTextureFormatDataType(UTextureFormat format) {
 		switch (format) {
+			case DEPTH_COMPONENT24:
 			case FLOAT32:
 				return GL4.GL_FLOAT;
+			case RGBA16F:
+				return GL4.GL_HALF_FLOAT;
 			case R8:
 			case RG8:
 			case RGB8:
 			case RGBA8:
+			case STENCIL_INDEX8:
 				return GL4.GL_UNSIGNED_BYTE;
+			case DEPTH24_STENCIL8:
+				return GL4.GL_UNSIGNED_INT_24_8;
 		}
 		return GL4.GL_INVALID_ENUM;
 	}
@@ -66,6 +73,8 @@ public class GLAPITranslator implements APITranslator {
 		switch (format) {
 			case FLOAT32:
 				return GL4.GL_R32F;
+			case RGBA16F:
+				return GL4.GL_RGBA16F;
 			case R8:
 				return GL4.GL_R8;
 			case RG8:
@@ -74,6 +83,12 @@ public class GLAPITranslator implements APITranslator {
 				return GL4.GL_RGB8;
 			case RGBA8:
 				return GL4.GL_RGBA8;
+			case DEPTH24_STENCIL8:
+				return GL4.GL_DEPTH24_STENCIL8;
+			case DEPTH_COMPONENT24:
+				return GL4.GL_DEPTH_COMPONENT24;
+			case STENCIL_INDEX8:
+				return GL4.GL_STENCIL_INDEX8;
 		}
 		return GL4.GL_INVALID_ENUM;
 	}
@@ -89,7 +104,14 @@ public class GLAPITranslator implements APITranslator {
 			case RGB8:
 				return GL4.GL_RGB;
 			case RGBA8:
+			case RGBA16F:
 				return GL4.GL_RGBA;
+			case DEPTH24_STENCIL8:
+				return GL4.GL_DEPTH_STENCIL;
+			case DEPTH_COMPONENT24:
+				return GL4.GL_DEPTH_COMPONENT;
+			case STENCIL_INDEX8:
+				return GL4.GL_STENCIL_INDEX;
 		}
 		return GL4.GL_INVALID_ENUM;
 	}
@@ -135,7 +157,7 @@ public class GLAPITranslator implements APITranslator {
 
 	@Override
 	public int getBufferUsage(UBufferUsageHint usage) {
-		switch (usage)  {
+		switch (usage) {
 			case STATIC:
 				return GL4.GL_STATIC_DRAW;
 			case DYNAMIC:
@@ -150,7 +172,7 @@ public class GLAPITranslator implements APITranslator {
 	public int getShaderType(UShaderType type) {
 		return type == UShaderType.FRAGMENT ? GL4.GL_FRAGMENT_SHADER : GL4.GL_VERTEX_SHADER;
 	}
-	
+
 	@Override
 	public int getTextureWrap(UTextureWrap wrap) {
 		switch (wrap) {
@@ -189,6 +211,25 @@ public class GLAPITranslator implements APITranslator {
 			case NEAREST_NEIGHBOR:
 				return GL4.GL_NEAREST;
 		}
+		return GL4.GL_INVALID_ENUM;
+	}
+
+	@Override
+	public int getFramebufferAttachment(UFramebufferAttachment attachment, int index) {
+		if (attachment == UFramebufferAttachment.COLOR) {
+			return GL4.GL_COLOR_ATTACHMENT0 + index;
+		} else if (index == 0) {
+			//Only one depth/stencil buffer is supported
+			switch (attachment) {
+				case DEPTH:
+					return GL4.GL_DEPTH_ATTACHMENT;
+				case DEPTH_STENCIL:
+					return GL4.GL_DEPTH_STENCIL_ATTACHMENT;
+				case STENCIL:
+					return GL4.GL_STENCIL_ATTACHMENT;
+			}
+		}
+
 		return GL4.GL_INVALID_ENUM;
 	}
 }

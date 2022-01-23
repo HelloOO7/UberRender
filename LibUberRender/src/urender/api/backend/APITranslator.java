@@ -3,6 +3,7 @@ package urender.api.backend;
 import urender.api.UBufferType;
 import urender.api.UBufferUsageHint;
 import urender.api.UDataType;
+import urender.api.UFramebufferAttachment;
 import urender.api.UPrimitiveType;
 import urender.api.UShaderType;
 import urender.api.UTextureFaceAssignment;
@@ -26,4 +27,5 @@ public interface APITranslator {
 	public int getTextureWrap(UTextureWrap wrap);
 	public int getTextureMagFilter(UTextureMagFilter filter);
 	public int getTextureMinFilter(UTextureMinFilter filter);
+	public int getFramebufferAttachment(UFramebufferAttachment attachment, int index);
 }

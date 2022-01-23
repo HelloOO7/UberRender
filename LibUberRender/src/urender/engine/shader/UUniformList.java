@@ -10,7 +10,7 @@ public class UUniformList extends ArrayList<UUniform> {
 	public void setup(UShaderProgram prog, UGfxRenderer rnd) {
 		for (UUniform u : this) {
 			UObjHandle loc = prog.getUniformLocation(rnd, u.name);
-			if (loc.isInitialized(rnd.getCore())) {
+			if (loc.isValid(rnd.getCore())) {
 				u.setData(loc, rnd);
 			}
 		}

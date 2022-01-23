@@ -13,11 +13,6 @@ public class UTextureMapperBuilder implements IBuilder<UTextureMapper> {
 		return this;
 	}
 	
-	public UTextureMapperBuilder setMeshUVSetName(String name) {
-		mapper.meshUVSetName = name;
-		return this;
-	}
-	
 	public UTextureMapperBuilder setShaderVariableName(String name) {
 		mapper.shaderVariableName = name;
 		return this;
@@ -40,21 +35,6 @@ public class UTextureMapperBuilder implements IBuilder<UTextureMapper> {
 	
 	public UTextureMapperBuilder setMinFilter(UTextureMinFilter minFilter) {
 		mapper.minFilter = minFilter;
-		return this;
-	}
-	
-	public UTextureMapperBuilder setTransformTranslation(float x, float y) {
-		mapper.transform.translation.set(x, y);
-		return this;
-	}
-	
-	public UTextureMapperBuilder setTransformScale(float x, float y) {
-		mapper.transform.scale.set(x, y);
-		return this;
-	}
-	
-	public UTextureMapperBuilder setTransformRotation(float alpha) {
-		mapper.transform.rotation = alpha;
 		return this;
 	}
 	

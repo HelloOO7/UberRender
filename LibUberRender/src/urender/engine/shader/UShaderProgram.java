@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import urender.api.UObjHandle;
+import urender.api.UShaderType;
 import urender.api.backend.RenderingBackend;
 import urender.engine.UGfxEngineObject;
 import urender.engine.UGfxEngineObjectType;
@@ -19,17 +20,31 @@ public class UShaderProgram extends UGfxEngineObject {
 
 	String vertexShaderName;
 	String fragmentShaderName;
-	
+
 	public UShaderProgram(String name, String vshName, String fshName) {
 		this.name = name;
 		this.vertexShaderName = vshName;
 		this.fragmentShaderName = fshName;
 	}
-	
+
+	public void setVsh(UShader vsh) {
+		if (vsh.getShaderType() != UShaderType.VERTEX) {
+			throw new IllegalArgumentException("Shader is not a vertex shader!");
+		}
+		vertexShaderName = vsh.getName();
+	}
+
+	public void setFsh(UShader fsh) {
+		if (fsh.getShaderType() != UShaderType.FRAGMENT) {
+			throw new IllegalArgumentException("Shader is not a fragment shader!");
+		}
+		fragmentShaderName = fsh.getName();
+	}
+
 	public String getVshName() {
 		return vertexShaderName;
 	}
-	
+
 	public String getFshName() {
 		return fragmentShaderName;
 	}
@@ -45,7 +60,7 @@ public class UShaderProgram extends UGfxEngineObject {
 		}
 		return uniform;
 	}
-	
+
 	public UObjHandle getAttributeLocation(UGfxRenderer rnd, String name) {
 		UObjHandle attribute = attributes.get(name);
 		if (attribute == null) {
@@ -59,17 +74,21 @@ public class UShaderProgram extends UGfxEngineObject {
 	}
 
 	public void setup(UGfxRenderer rnd, List<UShader> shaders) {
-		UShader vert = UGfxObject.find(shaders, vertexShaderName);
-		UShader frag = UGfxObject.find(shaders, fragmentShaderName);
-		if (vert != null && frag != null) {
-			RenderingBackend core = rnd.getCore();
+		RenderingBackend core = rnd.getCore();
+		if (!__program.isInitialized(core)) {
 			core.programInit(__program);
-			core.programAttachShader(__program, vert.__shObj);
-			core.programAttachShader(__program, frag.__shObj);
-			core.programLink(__program);
+		}
+		if (__program.getAndResetForceUpload(core)) {
+			UShader vert = UGfxObject.find(shaders, vertexShaderName);
+			UShader frag = UGfxObject.find(shaders, fragmentShaderName);
+			if (vert != null && frag != null) {
+				core.programAttachShader(__program, vert.__shObj);
+				core.programAttachShader(__program, frag.__shObj);
+				core.programLink(__program);
+			}
 		}
 	}
-	
+
 	public void use(UGfxRenderer rnd) {
 		rnd.getCore().programUse(__program);
 	}

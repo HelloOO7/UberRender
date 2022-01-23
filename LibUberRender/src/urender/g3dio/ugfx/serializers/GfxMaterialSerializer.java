@@ -54,13 +54,8 @@ public class GfxMaterialSerializer implements IGfxResourceSerializer<UMaterial> 
 			bld.addTextureMapper(
 				mapperBld
 					.setTextureName(in.readString())
-					.setMeshUVSetName(in.readString())
 					.setShaderVariableName(in.readString())
-					
-					.setTransformTranslation(in.readFloat(), in.readFloat())
-					.setTransformScale(in.readFloat(), in.readFloat())
-					.setTransformRotation(in.readFloat())
-					
+
 					.setMagFilter(MAG_FILTER_LOOKUP[in.read()])
 					.setMinFilter(MIN_FILTER_LOOKUP[in.read()])
 					.setWrapU(WRAP_LOOKUP[in.read()])
@@ -68,8 +63,12 @@ public class GfxMaterialSerializer implements IGfxResourceSerializer<UMaterial> 
 					.build()
 			);
 		}
+		
+		UMaterial mat = bld.build();
+		
+		GfxUniformListIO.readUniformList(mat.shaderParams, in);
 
-		consumer.loadObject(bld.build());
+		consumer.loadObject(mat);
 	}
 
 	@Override
@@ -78,20 +77,17 @@ public class GfxMaterialSerializer implements IGfxResourceSerializer<UMaterial> 
 		out.writeString(mat.getShaderProgramName());
 		
 		out.write(mat.getTextureMapperCount());
-		for (UTextureMapper mapper : mat.textureMappers()) {
+		for (UTextureMapper mapper : mat.getTextureMappers()) {
 			out.writeString(mapper.getTextureName());
-			out.writeString(mapper.getMeshUVSetName());
 			out.writeString(mapper.getShaderVariableName());
-			
-			out.writeFloats(mapper.transform.translation.x, mapper.transform.translation.y);
-			out.writeFloats(mapper.transform.scale.x, mapper.transform.scale.y);
-			out.writeFloat(mapper.transform.rotation);
 			
 			out.write(IGfxResourceSerializer.findEnumIndex(MAG_FILTER_LOOKUP, mapper.getMagFilter()));
 			out.write(IGfxResourceSerializer.findEnumIndex(MIN_FILTER_LOOKUP, mapper.getMinFilter()));
 			out.write(IGfxResourceSerializer.findEnumIndex(WRAP_LOOKUP, mapper.getWrapU()));
 			out.write(IGfxResourceSerializer.findEnumIndex(WRAP_LOOKUP, mapper.getWrapV()));
 		}
+		
+		GfxUniformListIO.writeUniformList(mat.shaderParams, out);
 	}
 
 	@Override

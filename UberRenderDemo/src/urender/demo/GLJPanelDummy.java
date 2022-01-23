@@ -13,16 +13,21 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.io.File;
 import javax.swing.SwingUtilities;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
+import urender.api.UFramebufferAttachment;
+import urender.api.UTextureFormat;
 import urender.api.backend.GLRenderingBackend;
+import urender.engine.UFramebuffer;
 import urender.engine.UGfxRenderer;
+import urender.engine.UMaterial;
+import urender.engine.URenderTarget;
+import urender.engine.shader.UUniform;
 import urender.engine.shader.UUniformMatrix3;
 import urender.engine.shader.UUniformMatrix4;
 import urender.g3dio.ugfx.UGfxResource;
-import urender.scenegraph.UCamera;
 import urender.scenegraph.UCameraLookAtOrbit;
 import urender.scenegraph.URenderQueue;
 import urender.scenegraph.UScene;
@@ -38,9 +43,12 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 
 	//private static final USceneNode RENDER_TEST_MODEL = OBJModelLoader.createOBJModelSceneNode("urender/demo/model", "untitled_uv.obj");
 	private static final USceneNode RENDER_TEST_MODEL = new USceneNode();
-	
+	private static final USceneNode FILL_SCREEN_MODEL = new USceneNode();
+
 	static {
-		UGfxResource.loadResourceClasspath("urender/demo/model/Demo.gfx", UScenegraphGfxResourceLoader.getInstance(), new USceneNodeGfxResourceAdapter(RENDER_TEST_MODEL));
+		//UGfxResource.loadResourceClasspath("urender/demo/model/Demo.gfx", UScenegraphGfxResourceLoader.getInstance(), new USceneNodeGfxResourceAdapter(RENDER_TEST_MODEL));
+		UGfxResource.loadResourceFile(new File("Demo.gfx"), UScenegraphGfxResourceLoader.getInstance(), new USceneNodeGfxResourceAdapter(RENDER_TEST_MODEL));
+		UGfxResource.loadResourceFile(new File("FillScreenQuad.gfx"), UScenegraphGfxResourceLoader.getInstance(), new USceneNodeGfxResourceAdapter(FILL_SCREEN_MODEL));
 	}
 
 	protected static class DefaultCaps extends GLCapabilities {
@@ -74,6 +82,7 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		super(caps);
 		super.addGLEventListener(this);
 		animator = new FPSAnimator(this, 75);
+		animator.start();
 
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -109,7 +118,6 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 					}
 					lastMY = e.getY();
 				}
-				display();
 			}
 		});
 
@@ -117,11 +125,10 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				tz += e.getWheelRotation() / 10f * tz;
-				display();
 			}
 		});
 	}
-	
+
 	@Override
 	public void init(GLAutoDrawable glad) {
 		backend.setGL(glad.getGL().getGL4());
@@ -138,11 +145,11 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		gl.glClear(GL4.GL_DEPTH_BUFFER_BIT | GL4.GL_COLOR_BUFFER_BIT | GL4.GL_STENCIL_BUFFER_BIT);
 
 		RENDER_TEST_MODEL.setup(new UGfxRenderer(backend));
-		
+
 		rootScene.addGlobalUniform(worldMtxU);
 		rootScene.addGlobalUniform(projMtxU);
 		rootScene.addGlobalUniform(normMtxU);
-		
+
 		rootScene.addChild(RENDER_TEST_MODEL);
 		rootScene.camera = camera;
 	}
@@ -151,7 +158,7 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 	public void dispose(GLAutoDrawable glad) {
 
 	}
-	
+
 	private UScene rootScene = new UScene();
 	private UCameraLookAtOrbit camera = new UCameraLookAtOrbit();
 
@@ -163,10 +170,14 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 	private UUniformMatrix4 projMtxU = new UUniformMatrix4("UBR_ProjectionMatrix", projMtx);
 	private UUniformMatrix3 normMtxU = new UUniformMatrix3("UBR_NormalMatrix", normMtx);
 
-	@Override
-	public void display(GLAutoDrawable glad) {
-		GL4 gl = glad.getGL().getGL4();
+	private URenderTarget rtPosition = new URenderTarget(0, "PositionTexture", UFramebufferAttachment.COLOR, UTextureFormat.RGBA16F);
+	private URenderTarget rtNormal = new URenderTarget(1, "NormalTexture", UFramebufferAttachment.COLOR, UTextureFormat.RGBA16F);
+	private URenderTarget rtAlbedo = new URenderTarget(2, "AlbedoTexture", UFramebufferAttachment.COLOR, UTextureFormat.RGBA8);
+	private URenderTarget rtDepth = new URenderTarget(0, "DepthTexture", UFramebufferAttachment.DEPTH_STENCIL, UTextureFormat.DEPTH24_STENCIL8);
 
+	private UFramebuffer framebuffer = new UFramebuffer(rtPosition, rtDepth, rtNormal, rtAlbedo);
+
+	private void clearViewport(GL4 gl) {
 		gl.glViewport(0, 0, getWidth(), getHeight());
 
 		gl.glClearColor(0f, 0.5f, 0.9f, 1f);
@@ -177,9 +188,39 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		gl.glEnable(GL4.GL_DEPTH_TEST);
 		gl.glDepthFunc(GL4.GL_LEQUAL);
 		gl.glClear(GL4.GL_DEPTH_BUFFER_BIT | GL4.GL_COLOR_BUFFER_BIT);
+	}
+
+	private void drawScene(UGfxRenderer rnd) {
+		URenderQueue queue = rootScene.calcRenderQueue();
+
+		for (URenderQueue.URenderQueueNodeState state : queue.queue()) {
+			worldMtx.set(state.viewMatrix);
+			worldMtx.mul(state.modelMatrix);
+			state.modelMatrix.normal(normMtx);
+			for (UMaterial mat : state.node.materials) {
+				for (UUniform uniform : mat.shaderParams) {
+					if (uniform.getName().equals("time")) {
+						uniform.set((float) (System.currentTimeMillis() % 86400000));
+					}
+				}
+			}
+			projMtx.set(state.projectionMatrix);
+			state.node.drawAllModels(rnd, state);
+		}
+	}
+
+	@Override
+	public void display(GLAutoDrawable glad) {
+		GL4 gl = glad.getGL().getGL4();
 
 		UGfxRenderer renderer = new UGfxRenderer(backend);
-		
+
+		framebuffer.setAllRenderTargetResolution(getWidth(), getHeight());
+
+		renderer.setFramebuffer(framebuffer);
+
+		clearViewport(gl);
+
 		camera.FOV = (float) Math.toRadians(60f);
 		camera.aspect = getWidth() / (float) getHeight();
 		camera.zNear = 0.1f;
@@ -188,17 +229,17 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		camera.rotation.set(rx, ry, 0f);
 		camera.target.set(0f, 0f, 0f);
 		camera.postTranslation.set(tx, ty, tz);
-				
-		URenderQueue queue = rootScene.calcRenderQueue();
 		
-		for (URenderQueue.URenderQueueNodeState state : queue.queue()) {
-			worldMtx.set(state.viewMatrix);
-			worldMtx.mul(state.modelMatrix);
-			state.modelMatrix.normal(normMtx);
-			projMtx.set(state.projectionMatrix);
-			state.node.drawAllModels(renderer, state);
-		}
+		drawScene(renderer);
 
+		renderer.setScreenFramebuffer();
+		renderer.setRenderSourceFramebuffer(framebuffer);
+
+		clearViewport(gl);
+
+		FILL_SCREEN_MODEL.setup(renderer);
+		FILL_SCREEN_MODEL.drawAllModels(renderer, new URenderQueue.URenderQueueNodeState(null));
+		
 		backend.flush();
 	}
 

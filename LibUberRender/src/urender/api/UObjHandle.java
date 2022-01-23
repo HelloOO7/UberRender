@@ -30,7 +30,7 @@ public class UObjHandle {
 	
 	public int getValue(RenderingBackend backend) {
 		if (!isInitialized(backend)) {
-			throw new RuntimeException("Handle not initialized!");
+			throw new RuntimeException("Handle not initialized for " + backend + "!");
 		}
 		return getValueInternal(backend);
 	}
@@ -40,6 +40,10 @@ public class UObjHandle {
 	}
 	
 	public boolean isInitialized(RenderingBackend backend) {
+		return values.containsKey(backend.getIdent().hashCode());
+	}
+	
+	public boolean isValid(RenderingBackend backend) {
 		return getValueInternal(backend) != -1;
 	}
 	
