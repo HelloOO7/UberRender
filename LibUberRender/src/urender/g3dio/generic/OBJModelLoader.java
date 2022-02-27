@@ -10,6 +10,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
@@ -32,7 +34,7 @@ import urender.scenegraph.UModel;
 import urender.scenegraph.USceneNode;
 
 public class OBJModelLoader {
-	
+
 	private static final String OBJ_DEFAULT_SHADER_NAME = "OBJDefaultShader";
 	private static final String OBJ_DEFAULT_SHADER_VERT_NAME = "OBJDefaultShader_V";
 	private static final String OBJ_DEFAULT_SHADER_FRAG_NAME = "OBJDefaultShader_F";
@@ -42,22 +44,29 @@ public class OBJModelLoader {
 		+ "\n"
 		+ "layout(location = 0) in vec3 a_Position;\n"
 		+ "layout(location = 1) in vec3 a_Normal;\n"
-		+ "layout(location = 2) in vec2 a_Texcoord0;\n"
+		+ "layout(location = 2) in vec3 a_Tangent;\n"
+		+ "layout(location = 3) in vec2 a_Texcoord0;\n"
+		+ "layout(location = 4) in vec2 a_Texcoord1;\n"
 		+ "\n"
-		+ "uniform mat4 UBR_WorldMatrix;\n"
+		+ "uniform mat4 UBR_ModelMatrix;\n"
+		+ "uniform mat4 UBR_ViewMatrix;\n"
 		+ "uniform mat4 UBR_ProjectionMatrix;\n"
 		+ "uniform mat3 UBR_NormalMatrix;\n"
 		+ "\n"
 		+ "out vec3 FS_Normal;\n"
+		+ "out vec3 FS_Tangent;\n"
 		+ "out vec3 FS_View;\n"
 		+ "out vec2 FS_Texcoord0;\n"
+		+ "out vec2 FS_Texcoord1;\n"
 		+ "\n"
 		+ "void main(void) {\n"
-		+ "	vec4 outPosition = UBR_WorldMatrix * vec4(a_Position, 1.0);\n"
-		+ " FS_View = outPosition.xyz;"
-		+ " outPosition = UBR_ProjectionMatrix * outPosition;"
+		+ "	vec4 outPosition = UBR_ModelMatrix * vec4(a_Position, 1.0);\n"
+		+ " FS_View = outPosition.xyz;\n"
+		+ " outPosition = UBR_ProjectionMatrix * UBR_ViewMatrix * outPosition;\n"
 		+ "	FS_Normal = UBR_NormalMatrix * a_Normal;\n"
+		+ "	FS_Tangent = UBR_NormalMatrix * a_Tangent;\n"
 		+ "	FS_Texcoord0 = a_Texcoord0;\n"
+		+ "	FS_Texcoord1 = a_Texcoord1;\n"
 		+ "	gl_Position = outPosition;\n"
 		+ "}";
 
@@ -66,8 +75,10 @@ public class OBJModelLoader {
 		+ "uniform sampler2D Textures[1];"
 		+ "\n"
 		+ "in vec3 FS_Normal;\n"
+		+ "in vec3 FS_Tangent;\n"
 		+ "in vec3 FS_View;\n"
 		+ "in vec2 FS_Texcoord0;\n"
+		+ "in vec2 FS_Texcoord1;\n"
 		+ "\n"
 		+ "out vec4 FragColor;\n"
 		+ "\n"
@@ -81,6 +92,8 @@ public class OBJModelLoader {
 		UMaterialBuilder matBuilder = new UMaterialBuilder();
 		String nowMatName = null;
 		int texIdx = 0;
+
+		HashSet<String> loadedTextureNames = new HashSet<>();
 
 		String line;
 		while (s.hasNextLine()) {
@@ -107,22 +120,25 @@ public class OBJModelLoader {
 						String texturePath = commands[1];
 						String textureName = FSUtil.getFileNameWithoutExtension(texturePath);
 						mapperBld.setTextureName(textureName);
-						File fileTest = new File(texturePath);
-						if (fileTest.exists()) {
-							try {
-								FileInputStream in = new FileInputStream(fileTest);
-								dest.textures.add(IIOTextureLoader.createIIOTexture(in, textureName));
-								in.close();
-							} catch (IOException ex) {
-								Logger.getLogger(OBJModelLoader.class.getName()).log(Level.SEVERE, null, ex);
-							}
-						} else {
-							InputStream texStream = fs.getStream(texturePath);
-							if (texStream != null) {
-								dest.textures.add(IIOTextureLoader.createIIOTexture(texStream, textureName));
+						if (!loadedTextureNames.contains(textureName)) {
+							File fileTest = new File(texturePath);
+							if (fileTest.exists()) {
+								try {
+									FileInputStream in = new FileInputStream(fileTest);
+									dest.textures.add(IIOTextureLoader.createIIOTexture(in, textureName));
+									in.close();
+								} catch (IOException ex) {
+									Logger.getLogger(OBJModelLoader.class.getName()).log(Level.SEVERE, null, ex);
+								}
 							} else {
-								System.err.println("Could not load texture " + texturePath);
+								InputStream texStream = fs.getStream(texturePath);
+								if (texStream != null) {
+									dest.textures.add(IIOTextureLoader.createIIOTexture(texStream, textureName));
+								} else {
+									System.err.println("Could not load texture " + texturePath);
+								}
 							}
+							loadedTextureNames.add(textureName);
 						}
 						matBuilder.addTextureMapper(mapperBld.build());
 						break;
@@ -134,13 +150,13 @@ public class OBJModelLoader {
 			dest.materials.add(matBuilder.build());
 		}
 	}
-	
+
 	public static USceneNode createOBJModelSceneNode(File objFile) {
 		File parent = objFile.getAbsoluteFile().getParentFile();
 		String name = objFile.getName();
 		return createOBJModelSceneNode(new OBJDiskFilesystemAccessor(parent), name);
 	}
-	
+
 	public static USceneNode createOBJModelSceneNode(String resourceRoot, String filename) {
 		return createOBJModelSceneNode(new OBJRuntimeResourceFilesystemAccessor(resourceRoot), filename);
 	}
@@ -159,8 +175,12 @@ public class OBJModelLoader {
 
 		List<Vector3f> positions = new ArrayList<>();
 		List<Vector3f> normals = new ArrayList<>();
-		List<Vector2f> texcoords = new ArrayList<>();
+		List<Vector2f>[] texcoords = new ArrayList[2];
 		List<OBJFacepoint> faces = new ArrayList<>();
+
+		for (int i = 0; i < texcoords.length; i++) {
+			texcoords[i] = new ArrayList<>();
+		}
 
 		Scanner scanner = new Scanner(fs.getStream(filename));
 
@@ -255,7 +275,10 @@ public class OBJModelLoader {
 						normals.add(parseVector3(commands));
 						break;
 					case "vt":
-						texcoords.add(parseVector2(commands));
+						texcoords[0].add(parseVector2(commands));
+						break;
+					case "vt1":
+						texcoords[1].add(parseVector2(commands));
 						break;
 				}
 			}
@@ -265,7 +288,7 @@ public class OBJModelLoader {
 			model.meshes.add(meshInst);
 		}
 		node.models.add(model);
-		
+
 		node.shaders.add(UShader.createVertexShader(OBJ_DEFAULT_SHADER_VERT_NAME, OBJ_DEFAULT_SHADER_VERT));
 		node.shaders.add(UShader.createFragmentShader(OBJ_DEFAULT_SHADER_FRAG_NAME, OBJ_DEFAULT_SHADER_FRAG));
 
@@ -280,18 +303,24 @@ public class OBJModelLoader {
 	}
 
 	private static Vector2f parseVector2(String[] commands) {
+		if (commands[1].equals("NULL")) {
+			return null;
+		}
 		return new Vector2f(Float.parseFloat(commands[1]), Float.parseFloat(commands[2]));
 	}
 
-	private static boolean setupMesh(UMeshBuilder mesh, List<Vector3f> positions, List<Vector3f> normals, List<Vector2f> texcoords, List<OBJFacepoint> faces) {
+	private static boolean setupMesh(UMeshBuilder mesh, List<Vector3f> positions, List<Vector3f> normals, List<Vector2f>[] texcoords, List<OBJFacepoint> faces) {
 		mesh.setPrimitiveType(UPrimitiveType.TRIS);
 		if (!positions.isEmpty()) {
 			OBJVertex vtx = new OBJVertex();
 			List<OBJVertex> vertices = new ArrayList<>();
+			List<OBJVertex> verticesUnindexed = new ArrayList<>();
 			List<Integer> indices = new ArrayList<>();
 
 			boolean hasNormal = false;
-			boolean hasTexcoord = false;
+			boolean[] hasTexcoord = new boolean[2];
+			
+			System.out.println("Converting " + faces.size() + " faces...");
 
 			for (OBJFacepoint vp : faces) {
 				//System.out.println("vp " + vp.posIndex + "//" + vp.norIndex);
@@ -300,17 +329,27 @@ public class OBJModelLoader {
 					vtx.normal = normals.get(vp.norIndex);
 				}
 				if (vp.texcoordIndex >= 0) {
-					vtx.texcoord = texcoords.get(vp.texcoordIndex);
+					for (int i = 0; i < texcoords.length; i++) {
+						if (vp.texcoordIndex < texcoords[i].size()) {
+							vtx.texcoords[i] = texcoords[i].get(vp.texcoordIndex);
+						}
+					}
 				}
 				hasNormal |= vtx.normal != null;
-				hasTexcoord |= vtx.texcoord != null;
+				for (int i = 0; i < hasTexcoord.length; i++) {
+					hasTexcoord[i] |= vtx.texcoords[i] != null;
+					if (vtx.texcoords[i] == null && hasTexcoord[i]) {
+						throw new RuntimeException("Facepoint " + faces.indexOf(vp) + " of mesh " + mesh.getName() + " does not have texcoord " + i);
+					}
+				}
 
 				int index = vertices.indexOf(vtx);
+				verticesUnindexed.add(vtx);
 				if (index == -1) {
 					index = vertices.size();
 					vertices.add(vtx);
-					vtx = new OBJVertex();
 				}
+				vtx = new OBJVertex();
 				indices.add(index);
 			}
 
@@ -330,12 +369,19 @@ public class OBJModelLoader {
 			Vector3f n;
 			Vector2f tc;
 
+			boolean hasTangent = hasNormal && hasTexcoord[0];
+
 			int vtxStride = Float.BYTES * 3;
 			if (hasNormal) {
 				vtxStride += Float.BYTES * 3;
 			}
-			if (hasTexcoord) {
-				vtxStride += Float.BYTES * 2;
+			if (hasTangent) {
+				vtxStride += Float.BYTES * 3;
+			}
+			for (int i = 0; i < hasTexcoord.length; i++) {
+				if (hasTexcoord[i]) {
+					vtxStride += Float.BYTES * 2;
+				}
 			}
 
 			ByteBuffer vertexBuffer = ByteBuffer.allocateDirect(vtxStride * vertices.size());
@@ -358,52 +404,121 @@ public class OBJModelLoader {
 
 			if (hasNormal) {
 				attrBld.reset();
-				
-				UVertexAttribute nor 
+
+				UVertexAttribute nor
 					= attrBld
-					.setShaderAttrName("a_Normal")
-					.setOffset(size)
-					.setElementCount(3)
-					.setFormat(UDataType.FLOAT32)
-					.setNormalized(false)
-					.setTypeUnsigned(false)
-					.build();
+						.setShaderAttrName("a_Normal")
+						.setOffset(size)
+						.setElementCount(3)
+						.setFormat(UDataType.FLOAT32)
+						.setNormalized(false)
+						.setTypeUnsigned(false)
+						.build();
 				mesh.addVertexAttribute(nor);
 				size += nor.getSize();
 			}
-			if (hasTexcoord) {
+			if (hasTangent) {
 				attrBld.reset();
-				
-				UVertexAttribute uv 
+
+				UVertexAttribute tgt
 					= attrBld
-					.setShaderAttrName("a_Texcoord0")
-					.setOffset(size)
-					.setElementCount(2)
-					.setFormat(UDataType.FLOAT32)
-					.setNormalized(false)
-					.setTypeUnsigned(false)
-					.build();
-				mesh.addVertexAttribute(uv);
-				size += uv.getSize();
+						.setShaderAttrName("a_Tangent")
+						.setOffset(size)
+						.setElementCount(3)
+						.setFormat(UDataType.FLOAT32)
+						.setNormalized(false)
+						.setTypeUnsigned(false)
+						.build();
+				mesh.addVertexAttribute(tgt);
+				size += tgt.getSize();
+			}
+			for (int i = 0; i < hasTexcoord.length; i++) {
+				if (hasTexcoord[i]) {
+					attrBld.reset();
+
+					UVertexAttribute uv
+						= attrBld
+							.setShaderAttrName("a_Texcoord" + i)
+							.setOffset(size)
+							.setElementCount(2)
+							.setFormat(UDataType.FLOAT32)
+							.setNormalized(false)
+							.setTypeUnsigned(false)
+							.build();
+					mesh.addVertexAttribute(uv);
+					size += uv.getSize();
+				}
 			}
 
-			for (OBJVertex v : vertices) {
-				p = v.position;
-				n = v.normal == null ? dmyNormal : v.normal;
-				tc = v.texcoord == null ? dmyTexcoord : v.texcoord;
+			OBJVertex[] triVertices = new OBJVertex[3];
+			int[] triIndices = new int[3];
 
-				vertexBuffer.putFloat(v.position.x);
-				vertexBuffer.putFloat(v.position.y);
-				vertexBuffer.putFloat(v.position.z);
+			Vector3f edge1 = new Vector3f();
+			Vector3f edge2 = new Vector3f();
+			Vector2f deltaUV1 = new Vector2f();
+			Vector2f deltaUV2 = new Vector2f();
 
-				if (hasNormal) {
-					vertexBuffer.putFloat(v.normal.x);
-					vertexBuffer.putFloat(v.normal.y);
-					vertexBuffer.putFloat(v.normal.z);
+			Vector3f tangent = new Vector3f();
+
+			HashSet<OBJVertex> convVerts = new HashSet<>();
+			
+			System.out.println("About to convert " + verticesUnindexed.size() + " vertices.");
+
+			for (int ti = 0; ti < verticesUnindexed.size(); ti += 3) {
+				triVertices[0] = verticesUnindexed.get(ti);
+				triVertices[1] = verticesUnindexed.get(ti + 1);
+				triVertices[2] = verticesUnindexed.get(ti + 2);
+				triIndices[0] = indices.get(ti);
+				triIndices[1] = indices.get(ti + 1);
+				triIndices[2] = indices.get(ti + 2);
+
+				if (hasTangent) {
+					triVertices[1].position.sub(triVertices[0].position, edge1);
+					triVertices[2].position.sub(triVertices[0].position, edge2);
+					triVertices[1].texcoords[0].sub(triVertices[0].texcoords[0], deltaUV1);
+					triVertices[2].texcoords[0].sub(triVertices[0].texcoords[0], deltaUV2);
+
+					float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+					tangent.set(
+						edge1.x * deltaUV2.y - edge2.x * deltaUV1.y,
+						edge1.y * deltaUV2.y - edge2.y * deltaUV1.y,
+						edge1.z * deltaUV2.y - edge2.z * deltaUV1.y
+					);
+					tangent.mul(r);
+					tangent.normalize();
 				}
-				if (hasTexcoord) {
-					vertexBuffer.putFloat(v.texcoord.x);
-					vertexBuffer.putFloat(v.texcoord.y);
+
+				for (int pointIdx = 0; pointIdx < 3; pointIdx++) {
+					OBJVertex v = triVertices[pointIdx];
+					if (!convVerts.contains(v)) {
+						p = v.position;
+						n = v.normal == null ? dmyNormal : v.normal;
+
+						vertexBuffer.position(vtxStride * triIndices[pointIdx]);
+
+						vertexBuffer.putFloat(v.position.x);
+						vertexBuffer.putFloat(v.position.y);
+						vertexBuffer.putFloat(v.position.z);
+
+						if (hasNormal) {
+							vertexBuffer.putFloat(v.normal.x);
+							vertexBuffer.putFloat(v.normal.y);
+							vertexBuffer.putFloat(v.normal.z);
+						}
+						if (hasTangent) {
+							vertexBuffer.putFloat(tangent.x);
+							vertexBuffer.putFloat(tangent.y);
+							vertexBuffer.putFloat(tangent.z);
+						}
+						for (int i = 0; i < hasTexcoord.length; i++) {
+							if (hasTexcoord[i]) {
+								vertexBuffer.putFloat(v.texcoords[i].x);
+								vertexBuffer.putFloat(v.texcoords[i].y);
+							}
+						}
+						
+						convVerts.add(v);
+					}
 				}
 			}
 
@@ -431,14 +546,14 @@ public class OBJModelLoader {
 	private static class OBJVertex {
 
 		public Vector3f position;
-		public Vector2f texcoord;
+		public Vector2f[] texcoords = new Vector2f[2];
 		public Vector3f normal;
 
 		@Override
 		public int hashCode() {
 			int hash = 3;
 			hash = 23 * hash + Objects.hashCode(this.position);
-			hash = 23 * hash + Objects.hashCode(this.texcoord);
+			hash = 23 * hash + Arrays.hashCode(this.texcoords);
 			hash = 23 * hash + Objects.hashCode(this.normal);
 			return hash;
 		}
@@ -452,7 +567,7 @@ public class OBJModelLoader {
 				return false;
 			}
 			final OBJVertex other = (OBJVertex) obj;
-			return Objects.equals(position, other.position) && Objects.equals(normal, other.normal) && Objects.equals(texcoord, other.texcoord);
+			return Objects.equals(position, other.position) && Objects.equals(normal, other.normal) && Arrays.equals(texcoords, other.texcoords);
 		}
 	}
 
@@ -462,27 +577,28 @@ public class OBJModelLoader {
 		public int texcoordIndex = -1;
 		public int norIndex = -1;
 	}
-	
+
 	private static interface OBJFilesystemAccessor {
+
 		public InputStream getStream(String path);
 	}
-	
+
 	private static class OBJDiskFilesystemAccessor implements OBJFilesystemAccessor {
 
 		private final File relativeRoot;
-		
+
 		public OBJDiskFilesystemAccessor(File relativeRoot) {
 			this.relativeRoot = relativeRoot;
 		}
-		
+
 		@Override
 		public InputStream getStream(String path) {
 			File f = new File(path);
-			
+
 			if (!f.exists()) {
 				f = Paths.get(relativeRoot.getAbsolutePath(), path).toFile();
 			}
-			
+
 			try {
 				return new BufferedInputStream(new FileInputStream(f));
 			} catch (FileNotFoundException ex) {
@@ -490,15 +606,15 @@ public class OBJModelLoader {
 			}
 		}
 	}
-	
+
 	private static class OBJRuntimeResourceFilesystemAccessor implements OBJFilesystemAccessor {
 
 		private final String rootPath;
-		
+
 		public OBJRuntimeResourceFilesystemAccessor(String rootPath) {
 			this.rootPath = rootPath;
 		}
-		
+
 		@Override
 		public InputStream getStream(String path) {
 			return OBJModelLoader.class.getClassLoader().getResourceAsStream(rootPath + "/" + path);

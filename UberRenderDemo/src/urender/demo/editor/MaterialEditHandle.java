@@ -33,6 +33,7 @@ public class MaterialEditHandle implements IEditHandle<UMaterial> {
 			shadingMethodModel.addElement(sm);
 		}
 		shadingMethodModel.setSelectedItem(material.getDrawLayer().method);
+		shadingPriorityModel.setValue(material.getDrawLayer().priority);
 	}
 
 	@Override

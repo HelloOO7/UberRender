@@ -1,10 +1,9 @@
 package urender.g3dio.ugfx.serializers;
 
 import java.io.IOException;
-import urender.common.io.base.iface.DataInputEx;
-import urender.common.io.base.iface.DataOutputEx;
 import urender.engine.shader.UShaderProgram;
 import urender.g3dio.ugfx.UGfxDataInput;
+import urender.g3dio.ugfx.UGfxDataOutput;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
 public class GfxProgramSerializer implements IGfxResourceSerializer<UShaderProgram> {
@@ -20,7 +19,7 @@ public class GfxProgramSerializer implements IGfxResourceSerializer<UShaderProgr
 	}
 
 	@Override
-	public void serialize(UShaderProgram prog, DataOutputEx out) throws IOException {
+	public void serialize(UShaderProgram prog, UGfxDataOutput out) throws IOException {
 		out.writeString(prog.getName());
 		out.writeString(prog.getVshName());
 		out.writeString(prog.getFshName());

@@ -3,6 +3,7 @@ package urender.g3dio.ugfx.serializers;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import urender.api.UTextureFormat;
+import urender.api.UTextureSwizzleChannel;
 import urender.api.UTextureType;
 import urender.common.io.base.iface.DataInputEx;
 import urender.common.io.base.iface.DataOutputEx;
@@ -10,19 +11,13 @@ import urender.engine.UTexture;
 import urender.engine.UTexture2D;
 import urender.engine.UTexture2DBuilder;
 import urender.engine.UTextureBuilder;
+import urender.engine.UTextureSwizzleMask;
 import urender.g3dio.ugfx.UGfxDataInput;
+import urender.g3dio.ugfx.UGfxDataOutput;
+import urender.g3dio.ugfx.UGfxFormatRevisions;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
 public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
-
-	private static final UTextureType[] TEX_TYPE_LOOKUP = new UTextureType[]{UTextureType.TEX2D, UTextureType.TEX2D_CUBEMAP};
-	private static final UTextureFormat[] TEX_FORMAT_LOOKUP = new UTextureFormat[]{
-		UTextureFormat.R8,
-		UTextureFormat.RG8,
-		UTextureFormat.RGB8,
-		UTextureFormat.RGBA8,
-		UTextureFormat.FLOAT32
-	};
 
 	private static final ITextureSerializer[] TEX_SERIALIZERS = new ITextureSerializer[]{
 		new Texture2DSerializer()
@@ -44,7 +39,7 @@ public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 
 	@Override
 	public void deserialize(UGfxDataInput in, IGfxResourceConsumer consumer) throws IOException {
-		UTextureType type = TEX_TYPE_LOOKUP[in.readUnsignedByte()];
+		UTextureType type = in.readEnum(UTextureType.class);
 
 		UTextureBuilder tex = decideSerializer(type).readTexture(in);
 
@@ -52,20 +47,34 @@ public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 			.setName(in.readString())
 			.setWidth(in.readUnsignedShort())
 			.setHeight(in.readUnsignedShort())
-			.setFormat(TEX_FORMAT_LOOKUP[in.read()]);
+			.setFormat(in.readEnum(UTextureFormat.class));
+
+		if (in.versionOver(UGfxFormatRevisions.TEXTURE_SWIZZLE_MASKS)) {
+			tex.setSwizzleMask(new UTextureSwizzleMask(
+				in.readEnum(UTextureSwizzleChannel.class),
+				in.readEnum(UTextureSwizzleChannel.class),
+				in.readEnum(UTextureSwizzleChannel.class),
+				in.readEnum(UTextureSwizzleChannel.class)
+			));
+		}
 
 		consumer.loadObject(tex.build());
 	}
 
 	@Override
-	public void serialize(UTexture tex, DataOutputEx out) throws IOException {
-		out.write(IGfxResourceSerializer.findEnumIndex(TEX_TYPE_LOOKUP, tex.getTextureType()));
-		
+	public void serialize(UTexture tex, UGfxDataOutput out) throws IOException {
+		out.writeEnum(tex.getTextureType());
+
 		decideSerializer(tex.getTextureType()).writeTexture(tex, out);
-		
+
 		out.writeString(tex.getName());
-		out.writeShorts(tex.width, tex.height);
-		out.write(IGfxResourceSerializer.findEnumIndex(TEX_FORMAT_LOOKUP, tex.format));
+		out.writeShorts(tex.getWidth(), tex.getHeight());
+		out.writeEnum(tex.format);
+
+		out.writeEnum(tex.swizzleMask.r);
+		out.writeEnum(tex.swizzleMask.g);
+		out.writeEnum(tex.swizzleMask.b);
+		out.writeEnum(tex.swizzleMask.a);
 	}
 
 	@Override
@@ -78,7 +87,7 @@ public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 		public UTextureType getTexType();
 
 		public UTextureBuilder readTexture(DataInputEx input) throws IOException;
-		
+
 		public void writeTexture(UTexture tex, DataOutputEx output) throws IOException;
 	}
 
@@ -100,14 +109,13 @@ public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 
 		@Override
 		public void writeTexture(UTexture tex, DataOutputEx output) throws IOException {
-			ByteBuffer data = ((UTexture2D)tex).data;
+			ByteBuffer data = ((UTexture2D) tex).data;
 			byte[] bytes = null;
 			if (!data.hasArray()) {
 				bytes = new byte[data.capacity()];
 				data.rewind();
 				data.get(bytes);
-			}
-			else {
+			} else {
 				bytes = data.array();
 			}
 			output.writeInt(bytes.length);

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<Form version="1.3" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
+  <AuxValues>
+    <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
+    <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="1"/>
+    <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
+  </AuxValues>
+
+  <Layout>
+    <DimensionLayout dim="0">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="specularLabel" min="-2" max="-2" attributes="0"/>
+                  <Component id="diffuseLabel" min="-2" max="-2" attributes="0"/>
+                  <Component id="ambientLabel" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="diffuse" min="-2" max="-2" attributes="0"/>
+                  <Component id="specular" min="-2" max="-2" attributes="0"/>
+                  <Component id="ambient" alignment="0" min="-2" max="-2" attributes="0"/>
+              </Group>
+          </Group>
+      </Group>
+    </DimensionLayout>
+    <DimensionLayout dim="1">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="ambient" max="32767" attributes="0"/>
+                  <Component id="ambientLabel" min="-2" pref="23" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="diffuseLabel" max="32767" attributes="0"/>
+                  <Component id="diffuse" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="specular" min="-2" max="-2" attributes="0"/>
+                  <Component id="specularLabel" min="-2" pref="23" max="-2" attributes="0"/>
+              </Group>
+          </Group>
+      </Group>
+    </DimensionLayout>
+  </Layout>
+  <SubComponents>
+    <Component class="javax.swing.JLabel" name="ambientLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Ambient"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="diffuseLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Diffuse"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="specularLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Specular"/>
+      </Properties>
+    </Component>
+    <Component class="urender.demo.debug.SimpleColorSelector" name="specular">
+    </Component>
+    <Component class="urender.demo.debug.SimpleColorSelector" name="diffuse">
+    </Component>
+    <Component class="urender.demo.debug.SimpleColorSelector" name="ambient">
+    </Component>
+  </SubComponents>
+</Form>

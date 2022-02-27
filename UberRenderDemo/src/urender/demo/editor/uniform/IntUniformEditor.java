@@ -41,8 +41,8 @@ public class IntUniformEditor extends javax.swing.JPanel implements IUniformEdit
                 .addContainerGap()
                 .addComponent(valueLabel)
                 .addGap(18, 18, 18)
-                .addComponent(spinner, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(spinner, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(23, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

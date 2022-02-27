@@ -1,5 +1,7 @@
 package urender.demo.editor;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JComboBox;
 import javax.swing.JList;
 
@@ -78,14 +80,13 @@ public class AddRemoveItemButtons<E> extends javax.swing.JPanel {
 
     private void btnAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddActionPerformed
 		if (handler != null && listModel != null) {
-			E element = handler.add();
-			if (element != null) {
+			List<E> elements = handler.add();
+			for (E element : elements) {
 				int index = listModel.getSize();
-				listModel.add(element);
+				listModel.addOrReplace(element);
 				if (comboBox != null) {
 					comboBox.setSelectedIndex(index);
-				}
-				else {
+				} else {
 					list.setSelectedIndex(index);
 				}
 			}
@@ -102,8 +103,7 @@ public class AddRemoveItemButtons<E> extends javax.swing.JPanel {
 					listModel.remove(hnd.getContent());
 					if (comboBox != null) {
 						comboBox.setSelectedIndex(Math.min(comboBox.getItemCount() - 1, oldIdx));
-					}
-					else {
+					} else {
 						list.setSelectedIndex(Math.min(listModel.getSize() - 1, oldIdx));
 					}
 				}
@@ -119,8 +119,23 @@ public class AddRemoveItemButtons<E> extends javax.swing.JPanel {
 
 	public static interface Handler<E> {
 
-		public E add();
+		public List<E> add();
 
 		public boolean remove(E value);
+	}
+
+	public static interface SingleHandler<E> extends Handler<E> {
+
+		public E addSingle();
+
+		@Override
+		public default List<E> add() {
+			List<E> l = new ArrayList<>();
+			E val = addSingle();
+			if (val != null) {
+				l.add(val);
+			}
+			return l;
+		}
 	}
 }

@@ -1,16 +1,21 @@
 package urender.api.backend;
 
 import com.jogamp.opengl.GL4;
+import urender.api.UBlendEquation;
+import urender.api.UBlendFunction;
 import urender.api.UBufferType;
 import urender.api.UBufferUsageHint;
 import urender.api.UDataType;
+import urender.api.UFaceCulling;
 import urender.api.UFramebufferAttachment;
 import urender.api.UPrimitiveType;
 import urender.api.UShaderType;
+import urender.api.UTestFunction;
 import urender.api.UTextureFaceAssignment;
 import urender.api.UTextureFormat;
 import urender.api.UTextureMagFilter;
 import urender.api.UTextureMinFilter;
+import urender.api.UTextureSwizzleChannel;
 import urender.api.UTextureType;
 import urender.api.UTextureWrap;
 
@@ -55,6 +60,7 @@ public class GLAPITranslator implements APITranslator {
 			case FLOAT32:
 				return GL4.GL_FLOAT;
 			case RGBA16F:
+			case R16F:
 				return GL4.GL_HALF_FLOAT;
 			case R8:
 			case RG8:
@@ -64,6 +70,8 @@ public class GLAPITranslator implements APITranslator {
 				return GL4.GL_UNSIGNED_BYTE;
 			case DEPTH24_STENCIL8:
 				return GL4.GL_UNSIGNED_INT_24_8;
+			case R16UI:
+				return GL4.GL_UNSIGNED_SHORT;
 		}
 		return GL4.GL_INVALID_ENUM;
 	}
@@ -89,6 +97,10 @@ public class GLAPITranslator implements APITranslator {
 				return GL4.GL_DEPTH_COMPONENT24;
 			case STENCIL_INDEX8:
 				return GL4.GL_STENCIL_INDEX8;
+			case R16F:
+				return GL4.GL_R16F;
+			case R16UI:
+				return GL4.GL_R16UI;
 		}
 		return GL4.GL_INVALID_ENUM;
 	}
@@ -98,7 +110,10 @@ public class GLAPITranslator implements APITranslator {
 		switch (format) {
 			case FLOAT32:
 			case R8:
+			case R16F:
 				return GL4.GL_RED;
+			case R16UI:
+				return GL4.GL_RED_INTEGER;
 			case RG8:
 				return GL4.GL_RG;
 			case RGB8:
@@ -230,6 +245,123 @@ public class GLAPITranslator implements APITranslator {
 			}
 		}
 
+		return GL4.GL_INVALID_ENUM;
+	}
+
+	@Override
+	public int getBlendEquation(UBlendEquation eq) {
+		switch (eq) {
+			case ADD:
+				return GL4.GL_FUNC_ADD;
+			case MAX:
+				return GL4.GL_MAX;
+			case MIN:
+				return GL4.GL_MIN;
+			case REVERSE_SUBTRACT:
+				return GL4.GL_FUNC_REVERSE_SUBTRACT;
+			case SUBTRACT:
+				return GL4.GL_FUNC_SUBTRACT;
+		}
+		return GL4.GL_INVALID_ENUM;
+	}
+
+	@Override
+	public int getBlendFunc(UBlendFunction func) {
+		switch (func) {
+			case CONSTANT_ALPHA:
+				return GL4.GL_CONSTANT_ALPHA;
+			case CONSTANT_COLOR:
+				return GL4.GL_CONSTANT_COLOR;
+			case DST_ALPHA:
+				return GL4.GL_DST_ALPHA;
+			case DST_COLOR:
+				return GL4.GL_DST_COLOR;
+			case ONE:
+				return GL4.GL_ONE;
+			case ONE_MINUS_CONSTANT_ALPHA:
+				return GL4.GL_ONE_MINUS_CONSTANT_ALPHA;
+			case ONE_MINUS_CONSTANT_COLOR:
+				return GL4.GL_ONE_MINUS_CONSTANT_COLOR;
+			case ONE_MINUS_DST_ALPHA:
+				return GL4.GL_ONE_MINUS_DST_ALPHA;
+			case ONE_MINUS_DST_COLOR:
+				return GL4.GL_ONE_MINUS_DST_COLOR;
+			case ONE_MINUS_SRC1_COLOR:
+				return GL4.GL_ONE_MINUS_SRC1_COLOR;
+			case ONE_MINUS_SRC1_ALPHA:
+				return GL4.GL_ONE_MINUS_SRC1_ALPHA;
+			case ONE_MINUS_SRC_ALPHA:
+				return GL4.GL_ONE_MINUS_SRC_ALPHA;
+			case ONE_MINUS_SRC_COLOR:
+				return GL4.GL_ONE_MINUS_SRC_COLOR;
+			case SRC1_ALPHA:
+				return GL4.GL_SRC1_ALPHA;
+			case SRC1_COLOR:
+				return GL4.GL_SRC1_COLOR;
+			case SRC_ALPHA:
+				return GL4.GL_SRC_ALPHA;
+			case SRC_ALPHA_SATURATE:
+				return GL4.GL_SRC_ALPHA_SATURATE;
+			case SRC_COLOR:
+				return GL4.GL_SRC_COLOR;
+			case ZERO:
+				return GL4.GL_ZERO;
+		}
+		return GL4.GL_INVALID_ENUM;
+	}
+
+	@Override
+	public int getFaceCulling(UFaceCulling faceCulling) {
+		switch (faceCulling) {
+			case BACK:
+				return GL4.GL_BACK;
+			case FRONT:
+				return GL4.GL_FRONT;
+			case FRONT_AND_BACK:
+				return GL4.GL_FRONT_AND_BACK;
+		}
+		return GL4.GL_INVALID_ENUM;
+	}
+
+	@Override
+	public int getTestFunc(UTestFunction func) {
+		switch (func) {
+			case ALWAYS:
+				return GL4.GL_ALWAYS;
+			case EQUAL:
+				return GL4.GL_EQUAL;
+			case GEQUAL:
+				return GL4.GL_GEQUAL;
+			case GREATER:
+				return GL4.GL_GREATER;
+			case LEQUAL:
+				return GL4.GL_LEQUAL;
+			case LESS:
+				return GL4.GL_LESS;
+			case NEVER:
+				return GL4.GL_NEVER;
+			case NOTEQUAL:
+				return GL4.GL_NOTEQUAL;
+		}
+		return GL4.GL_INVALID_ENUM;
+	}
+
+	@Override
+	public int getTextureSwizzleChannel(UTextureSwizzleChannel channel) {
+		switch (channel) {
+			case R:
+				return GL4.GL_RED;
+			case G:
+				return GL4.GL_GREEN;
+			case B:
+				return GL4.GL_BLUE;
+			case A:
+				return GL4.GL_ALPHA;
+			case ONE:
+				return GL4.GL_ONE;
+			case ZERO:
+				return GL4.GL_ZERO;
+		}
 		return GL4.GL_INVALID_ENUM;
 	}
 }

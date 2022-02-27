@@ -5,7 +5,6 @@ import urender.api.UShaderType;
 import urender.api.backend.RenderingBackend;
 import urender.engine.UGfxEngineObject;
 import urender.engine.UGfxEngineObjectType;
-import urender.engine.UGfxRenderer;
 
 public class UShader extends UGfxEngineObject {
 
@@ -40,13 +39,12 @@ public class UShader extends UGfxEngineObject {
 		this.shaderData = shaderData;
 	}
 
-	public void setup(UGfxRenderer rnd) {
-		RenderingBackend core = rnd.getCore();
-		if (!__shObj.isInitialized(core)) {
-			core.shaderInit(__shObj, type);
+	public void setup(RenderingBackend rnd) {
+		if (!__shObj.isInitialized(rnd)) {
+			rnd.shaderInit(__shObj, type);
 		}
-		if (__shObj.getAndResetForceUpload(core)) {
-			core.shaderCompileSource(__shObj, shaderData);
+		if (__shObj.getAndResetForceUpload(rnd)) {
+			rnd.shaderCompileSource(__shObj, shaderData);
 		}
 	}
 

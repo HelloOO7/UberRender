@@ -28,7 +28,7 @@ public class MultiComboBoxModel<E> implements ComboBoxModel<E> {
 			}
 		}
 		if (name != null) {
-			System.out.println("Notfound item by name " + name);
+			//System.out.println("Notfound item by name " + name);
 		}
 		setSelectedItem(null);
 	}

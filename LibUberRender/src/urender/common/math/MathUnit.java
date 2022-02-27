@@ -20,7 +20,7 @@ public abstract class MathUnit<M> {
 				return (M) hnd.object;
 			}
 		}
-		throw new OutOfMemoryError("Matrix allocation capacity exceeded!!");
+		throw new OutOfMemoryError("MathUnit allocation capacity exceeded!!");
 	}
 	
 	public void free(M m) {

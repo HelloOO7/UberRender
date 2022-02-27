@@ -18,18 +18,18 @@ public class UTexture2DCube extends UTexture {
 	}
 
 	@Override
-	public void setup(UGfxRenderer rnd) {
-		RenderingBackend core = rnd.getCore();
-
-		if (!__handle.isInitialized(core)) {
-			core.texInit(__handle, UTextureType.TEX2D_CUBEMAP);
+	public void setup(RenderingBackend rnd) {
+		if (!__handle.isInitialized(rnd)) {
+			rnd.texInit(__handle, UTextureType.TEX2D_CUBEMAP);
 		}
 
-		if (__handle.getAndResetForceUpload(core)) {
+		if (__handle.getAndResetForceUpload(rnd)) {
 			for (UTextureCubeFace face : faces) {
-				core.texUploadData2D(__handle, width, height, format, face.assignment, face.data);
+				rnd.texUploadData2D(__handle, width, height, format, face.assignment, face.data);
 			}
 		}
+		
+		swizzleMask.setup(rnd, this);
 	}
 
 	@Override

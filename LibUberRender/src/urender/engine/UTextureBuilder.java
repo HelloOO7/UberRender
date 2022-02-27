@@ -9,6 +9,7 @@ public abstract class UTextureBuilder implements IBuilder<UTexture> {
 	protected int width;
 	protected int height;
 	protected UTextureFormat format;
+	protected UTextureSwizzleMask swizzleMask = new UTextureSwizzleMask();
 	
 	public UTextureBuilder setName(String name) {
 		this.name = name;
@@ -27,6 +28,11 @@ public abstract class UTextureBuilder implements IBuilder<UTexture> {
 	
 	public UTextureBuilder setFormat(UTextureFormat format) {
 		this.format = format;
+		return this;
+	}
+	
+	public UTextureBuilder setSwizzleMask(UTextureSwizzleMask swizzleMask) {
+		this.swizzleMask = swizzleMask;
 		return this;
 	}
 

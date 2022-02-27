@@ -11,23 +11,10 @@ import urender.engine.UMeshBuilder;
 import urender.engine.UVertexAttribute;
 import urender.engine.UVertexAttributeBuilder;
 import urender.g3dio.ugfx.UGfxDataInput;
+import urender.g3dio.ugfx.UGfxDataOutput;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
 public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
-
-	private static final UPrimitiveType[] PRIMITIVE_TYPE_LOOKUP = new UPrimitiveType[]{
-		UPrimitiveType.TRIS,
-		UPrimitiveType.LINES,
-		UPrimitiveType.POINTS
-	};
-
-	private static final UDataType[] MESH_DATA_TYPE_LOOKUP = new UDataType[]{
-		UDataType.FLOAT32,
-		UDataType.FLOAT64,
-		UDataType.FLOAT16,
-		UDataType.INT8,
-		UDataType.INT16,
-		UDataType.INT32,};
 
 	@Override
 	public String getTagIdent() {
@@ -41,13 +28,12 @@ public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
 		b.put(ByteBuffer.wrap(array)); //DirectByteBuffer will transfer faster.
 		return b;
 	}
-	
+
 	private void writeRawBuffer(ByteBuffer b, DataOutputEx out) throws IOException {
 		byte[] bytes;
 		if (b.hasArray()) {
 			bytes = b.array();
-		}
-		else {
+		} else {
 			bytes = new byte[b.capacity()];
 			b.rewind();
 			b.get(bytes);
@@ -60,9 +46,9 @@ public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
 	public void deserialize(UGfxDataInput in, IGfxResourceConsumer consumer) throws IOException {
 		UMeshBuilder bld = new UMeshBuilder();
 		bld.setName(in.readString());
-		bld.setPrimitiveType(PRIMITIVE_TYPE_LOOKUP[in.read()]);
+		bld.setPrimitiveType(in.readEnum(UPrimitiveType.class));
 
-		UDataType iboFormat = MESH_DATA_TYPE_LOOKUP[in.read()];
+		UDataType iboFormat = in.readEnum(UDataType.class);
 
 		int vtxAttrCount = in.read();
 		UVertexAttributeBuilder attrBld = new UVertexAttributeBuilder();
@@ -74,38 +60,38 @@ public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
 					.setShaderAttrName(in.readString())
 					.setOffset(in.readUnsignedShort())
 					.setElementCount(in.read())
-					.setFormat(MESH_DATA_TYPE_LOOKUP[in.read()])
+					.setFormat(in.readEnum(UDataType.class))
 					.setTypeUnsigned(in.readBoolean())
 					.setNormalized(in.readBoolean())
 					.build()
 			);
 		}
-		
+
 		bld.setIBO(iboFormat, readRawBuffer(in)).setVBO(readRawBuffer(in));
-		
+
 		consumer.loadObject(bld.build());
 	}
 
 	@Override
-	public void serialize(UMesh mesh, DataOutputEx out) throws IOException {
+	public void serialize(UMesh mesh, UGfxDataOutput out) throws IOException {
 		out.writeString(mesh.getName());
-		out.write(IGfxResourceSerializer.findEnumIndex(PRIMITIVE_TYPE_LOOKUP, mesh.getPrimitiveType()));
-		
-		out.write(IGfxResourceSerializer.findEnumIndex(MESH_DATA_TYPE_LOOKUP, mesh.getIBOFormat()));
-		
+		out.writeEnum(mesh.getPrimitiveType());
+
+		out.writeEnum(mesh.getIBOFormat());
+
 		int vtxAttrCount = mesh.getVtxAttrCount();
 		out.write(vtxAttrCount);
 		for (int i = 0; i < vtxAttrCount; i++) {
 			UVertexAttribute a = mesh.getVtxAttr(i);
-			
+
 			out.writeString(a.getShaderAttrName());
 			out.writeShort(a.getOffset());
 			out.write(a.getElementCount());
-			out.write(IGfxResourceSerializer.findEnumIndex(MESH_DATA_TYPE_LOOKUP, a.getFormat()));
+			out.writeEnum(a.getFormat());
 			out.writeBoolean(a.getTypeIsUnsigned());
 			out.writeBoolean(a.isNormalized());
 		}
-		
+
 		writeRawBuffer(mesh.getIBO(), out);
 		writeRawBuffer(mesh.getVBO(), out);
 	}

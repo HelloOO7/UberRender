@@ -2,17 +2,13 @@ package urender.engine.shader;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import urender.api.UObjHandle;
-import urender.engine.UGfxRenderer;
+import urender.api.backend.RenderingBackend;
 
 public class UUniformList extends ArrayList<UUniform> {
 
-	public void setup(UShaderProgram prog, UGfxRenderer rnd) {
+	public void setup(UShaderProgram prog, RenderingBackend rnd) {
 		for (UUniform u : this) {
-			UObjHandle loc = prog.getUniformLocation(rnd, u.name);
-			if (loc.isValid(rnd.getCore())) {
-				u.setData(loc, rnd);
-			}
+			prog.setUniform(u, rnd);
 		}
 	}
 

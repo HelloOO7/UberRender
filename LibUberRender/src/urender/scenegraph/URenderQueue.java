@@ -4,13 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.joml.Matrix4f;
-import urender.engine.UDrawSources;
-import urender.engine.UDrawState;
+import urender.api.backend.RenderingBackend;
 import urender.engine.UGfxObject;
-import urender.engine.UGfxRenderer;
 import urender.engine.UMaterial;
 import urender.engine.UMaterialDrawLayer;
 import urender.engine.UMesh;
+import urender.engine.UTexture;
 import urender.engine.shader.UShaderProgram;
 import urender.engine.shader.UUniformList;
 
@@ -30,6 +29,10 @@ public class URenderQueue {
 	public void sort() {
 		Collections.sort(queue);
 	}
+	
+	public void sort(URenderQueueSorter sorter) {
+		queue.sort(sorter);
+	}
 
 	public Iterable<UDrawSources> drawSources() {
 		return drawSourcesAll;
@@ -37,6 +40,17 @@ public class URenderQueue {
 
 	public Iterable<URenderQueueMeshState> queue() {
 		return queue;
+	}
+	
+	public int getMaxRenderPriority(UMaterialDrawLayer.ShadingMethod sm) {
+		int max = -1;
+		for (URenderQueueMeshState s : queue) {
+			int p;
+			if ((p = s.mat.getDrawLayer().priority) > max) {
+				max = p;
+			}
+		}
+		return max;
 	}
 
 	public static class URenderQueueNodeState {
@@ -52,6 +66,7 @@ public class URenderQueue {
 
 		public URenderQueueNodeState(USceneNode node) {
 			this.drawSources = node.getDrawSources();
+			uniforms.addAll(node.uniforms);
 		}
 	}
 
@@ -63,7 +78,7 @@ public class URenderQueue {
 
 		private final UMesh mesh;
 		private final UMaterial mat;
-
+		
 		public URenderQueueMeshState(URenderQueueNodeState nodeState, UModel.UMeshInstance meshInstance) {
 			this.nodeState = nodeState;
 			this.meshInstance = meshInstance;
@@ -71,29 +86,38 @@ public class URenderQueue {
 			mat = UGfxObject.find(nodeState.drawSources.materialList, meshInstance.materialName);
 		}
 
+		public int getDrawPriority() {
+			return mat.getDrawLayer().priority;
+		}
+		
 		public void draw(UGfxRenderer rnd) {
 			if (mesh != null && mat != null) {
+				RenderingBackend core = rnd.getCore();
 				if (rnd.isShadingMethodCurrent(mat.getDrawLayer().method)) {
 					UDrawSources sources = nodeState.drawSources;
 					UDrawState drawState = rnd.getDrawState();
-					//System.out.println("Rendering mesh " + mesh.getName() + " using material " + mat.getName() + " and shader " + mat.getShaderProgramName());
+					//System.out.println("Rendering mesh " + mesh.getName() + " using material " + mat.getName() + " and shader " + mat.getShaderProgramName() + " layer " + mat.getDrawLayer().priority);
 					UShaderProgram shader = UGfxObject.find(sources.shaderProgramList, mat.getShaderProgramName());
 
 					if (shader != null) {
 						if (shader != drawState.currentShader || !drawState.currentUniformSet.valuesMatch(nodeState.uniforms)) {
-							shader.use(rnd);
+							shader.use(core);
 							
-							nodeState.uniforms.setup(shader, rnd);
+							nodeState.uniforms.setup(shader, core);
+							drawState.sceneUniformTemp.setup(shader, core);
 
 							drawState.currentUniformSet = nodeState.uniforms;
 						}
 						if (mat != drawState.currentMaterial || shader != drawState.currentShader) {
-							mat.configureShader(shader, rnd, sources.textureList);
+							List<UTexture> textureTmp = new ArrayList<>();
+							textureTmp.addAll(rnd.getRenderTextures()); //priority over normal textures
+							textureTmp.addAll(sources.textureList);
+							mat.configureShader(shader, core, textureTmp);
 							drawState.currentMaterial = mat;
 						}
 						drawState.currentShader = shader;
 
-						mesh.draw(rnd, shader);
+						mesh.draw(core, shader);
 					}
 				}
 			} else {

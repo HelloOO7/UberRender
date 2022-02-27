@@ -1,5 +1,7 @@
 package urender.scenegraph;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import urender.common.math.Matrix4Unit;
@@ -10,6 +12,7 @@ public class UScene extends UGfxScenegraphObject {
 	private final Matrix4Unit mtxMem = new Matrix4Unit(4);
 
 	public UCamera camera = new UCameraViewpoint();
+	public List<ULight> lights = new ArrayList<>();
 
 	private final USceneNode rootNode = new USceneNode();
 
@@ -19,6 +22,10 @@ public class UScene extends UGfxScenegraphObject {
 
 	public void addGlobalUniform(UUniform uniform) {
 		rootNode.uniforms.add(uniform);
+	}
+	
+	public List<UUniform> getSceneUniforms() {
+		return new ArrayList<>();
 	}
 
 	@Override
@@ -30,7 +37,6 @@ public class UScene extends UGfxScenegraphObject {
 		URenderQueue queue = new URenderQueue();
 
 		calcQueueNode(rootNode, null, queue);
-		queue.sort();
 
 		return queue;
 	}
@@ -53,8 +59,6 @@ public class UScene extends UGfxScenegraphObject {
 			state.modelMatrix = new Matrix4f(parentState.modelMatrix);
 			state.uniforms.addAll(parentState.uniforms);
 		}
-
-		state.uniforms.addAll(node.uniforms);
 
 		int inh = node.parentRelation.getTransformInheritance();
 		if ((inh & UTransformInheritance.IGNORE_CAMERA) != 0) {

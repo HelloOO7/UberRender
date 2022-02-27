@@ -23,7 +23,7 @@ public class TextureMapperEditor extends javax.swing.JPanel {
 		loadEnumComboBox(UTextureMagFilter.values(), magFilter);
 		loadEnumComboBox(UTextureMinFilter.values(), minFilter);
 	}
-	
+
 	public JTextField getNameEditField() {
 		return samplerName;
 	}
@@ -36,7 +36,10 @@ public class TextureMapperEditor extends javax.swing.JPanel {
 		}
 	}
 
+	private TextureMapperEditHandle handle;
+
 	public void load(TextureMapperEditHandle handle) {
+		this.handle = handle;
 		UTextureMapper mapper = handle.mapper;
 		samplerName.setText(mapper.getShaderVariableName());
 		texture.setModel(handle.textureSelect);
@@ -45,7 +48,7 @@ public class TextureMapperEditor extends javax.swing.JPanel {
 		magFilter.setSelectedItem(mapper.getMagFilter().name());
 		minFilter.setSelectedItem(mapper.getMinFilter().name());
 	}
-	
+
 	public void save(TextureMapperEditHandle handle) {
 		UTextureMapper mapper = handle.mapper;
 		TextureEditHandle texhnd = handle.textureSelect.getSelectedItem();
@@ -56,11 +59,11 @@ public class TextureMapperEditor extends javax.swing.JPanel {
 		mapper.setMinFilter(UTextureMinFilter.values()[minFilter.getSelectedIndex()]);
 		mapper.setShaderVariableName(getNowSamplerName());
 	}
-	
+
 	public String getNowSamplerName() {
 		return getDocText(samplerName.getDocument());
 	}
-	
+
 	private static String getDocText(Document doc) {
 		try {
 			return doc.getText(0, doc.getLength());
@@ -120,21 +123,23 @@ public class TextureMapperEditor extends javax.swing.JPanel {
                     .addComponent(filteringLabel)
                     .addGroup(paramsPanelLayout.createSequentialGroup()
                         .addGap(10, 10, 10)
-                        .addGroup(paramsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(paramsPanelLayout.createSequentialGroup()
-                                .addComponent(magFilterLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(magFilter, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(paramsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(paramsPanelLayout.createSequentialGroup()
                                 .addComponent(wrapULabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(wrapU, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(wrapU, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(wrapVLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(wrapV, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(minFilterLabel)))
-                    .addComponent(minFilter, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(wrapV, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(paramsPanelLayout.createSequentialGroup()
+                                .addGroup(paramsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(magFilterLabel)
+                                    .addComponent(minFilterLabel))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(paramsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addComponent(minFilter, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(magFilter, 0, 160, Short.MAX_VALUE))))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         paramsPanelLayout.setVerticalGroup(
@@ -164,6 +169,11 @@ public class TextureMapperEditor extends javax.swing.JPanel {
         textureLabel.setText("Texture");
 
         texture.setMaximumRowCount(20);
+        texture.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                textureActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -202,6 +212,11 @@ public class TextureMapperEditor extends javax.swing.JPanel {
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void textureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textureActionPerformed
+		TextureEditHandle texhnd = handle.textureSelect.getSelectedItem();
+		handle.mapper.setTexture(texhnd == null ? null : texhnd.tex);
+    }//GEN-LAST:event_textureActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

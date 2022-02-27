@@ -17,6 +17,10 @@ public class UFramebuffer {
 		}
 	}
 	
+	public List<? extends UTexture> getRenderTargets() {
+		return renderTargets;
+	}
+	
 	public URenderTarget findRenderTarget(String name) {
 		return UGfxObject.find(renderTargets, name);
 	}
@@ -27,12 +31,11 @@ public class UFramebuffer {
 		}
 	}
 	
-	public void setup(UGfxRenderer rnd) {
-		RenderingBackend core = rnd.getCore();
-		if (!__handle.isInitialized(core)) {
-			core.framebufferInit(__handle);
+	public void setup(RenderingBackend rnd) {
+		if (!__handle.isInitialized(rnd)) {
+			rnd.framebufferInit(__handle);
 		}
-		core.framebufferBind(__handle);
+		rnd.framebufferBind(__handle);
 		
 		int maxDrawBuffer = 0;
 		
@@ -50,6 +53,6 @@ public class UFramebuffer {
 			}
 		}
 		
-		core.drawBuffersDefine(__handle, drawBuffers);
+		rnd.drawBuffersDefine(__handle, drawBuffers);
 	}
 }

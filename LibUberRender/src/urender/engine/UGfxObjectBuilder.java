@@ -8,6 +8,10 @@ public abstract class UGfxObjectBuilder<O extends UGfxObject> implements IBuilde
 		return this;
 	}
 	
+	public String getName() {
+		return getObject().getName();
+	}
+	
 	protected abstract O getObject();
 	
 	public abstract void reset();

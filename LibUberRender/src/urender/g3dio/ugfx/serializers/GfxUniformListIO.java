@@ -7,7 +7,6 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import urender.common.io.base.iface.DataInputEx;
-import urender.common.io.base.iface.DataOutputEx;
 import urender.engine.shader.UUniform;
 import urender.engine.shader.UUniformFloat;
 import urender.engine.shader.UUniformInt;
@@ -16,24 +15,16 @@ import urender.engine.shader.UUniformType;
 import urender.engine.shader.UUniformVector2;
 import urender.engine.shader.UUniformVector3;
 import urender.engine.shader.UUniformVector4;
+import urender.g3dio.ugfx.UGfxDataInput;
+import urender.g3dio.ugfx.UGfxDataOutput;
 
 public class GfxUniformListIO {
 
-	private static final UUniformType[] UNIFORM_TYPE_LUT = new UUniformType[]{
-		UUniformType.INT,
-		UUniformType.FLOAT,
-		UUniformType.VEC2,
-		UUniformType.VEC3,
-		UUniformType.VEC4,
-		UUniformType.MATRIX3,
-		UUniformType.MATRIX4
-	};
-
-	public static void readUniformList(UUniformList dest, DataInputEx in) throws IOException {
+	public static void readUniformList(UUniformList dest, UGfxDataInput in) throws IOException {
 		int uniformCount = in.readUnsignedShort();
 		for (int uniformIdx = 0; uniformIdx < uniformCount; uniformIdx++) {
 			String name = in.readString();
-			UUniformType type = UNIFORM_TYPE_LUT[in.read()];
+			UUniformType type = in.readEnum(UUniformType.class);
 			int valueCount = in.readUnsignedShort();
 
 			switch (type) {
@@ -107,11 +98,11 @@ public class GfxUniformListIO {
 		}
 	}
 
-	public static void writeUniformList(UUniformList list, DataOutputEx out) throws IOException {
+	public static void writeUniformList(UUniformList list, UGfxDataOutput out) throws IOException {
 		out.writeShort(list.size());
 		for (UUniform u : list) {
 			out.writeString(u.getName());
-			out.write(IGfxResourceSerializer.findEnumIndex(UNIFORM_TYPE_LUT, u.getUniformType()));
+			out.writeEnum(u.getUniformType());
 			int count = u.valueCount();
 			out.writeShort(count);
 			for (int i = 0; i < count; i++) {

@@ -68,7 +68,7 @@ public class USceneNodeGfxResourceAdapter implements IGfxResourceConsumer, IGfxR
 			switch (sgObj.getType()) {
 				case MODEL:
 					node.models.add((UModel) sgObj);
-					break;
+					break;					
 			}
 		}
 	}

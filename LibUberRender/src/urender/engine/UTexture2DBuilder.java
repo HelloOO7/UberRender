@@ -13,7 +13,7 @@ public class UTexture2DBuilder extends UTextureBuilder {
 	
 	@Override
 	public UTexture build() {
-		return new UTexture2D(name, width, height, format, data);
+		return new UTexture2D(name, width, height, format, data, swizzleMask);
 	}
 
 }

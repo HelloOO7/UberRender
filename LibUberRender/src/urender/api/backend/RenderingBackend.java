@@ -6,13 +6,19 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import urender.api.UBlendEquation;
+import urender.api.UBlendFunction;
 import urender.api.UBufferType;
 import urender.api.UBufferUsageHint;
+import urender.api.UClearMode;
 import urender.api.UDataType;
+import urender.api.UFaceCulling;
 import urender.api.UFramebufferAttachment;
 import urender.api.UObjHandle;
 import urender.api.UPrimitiveType;
 import urender.api.UShaderType;
+import urender.api.UTestFunction;
+import urender.api.UTextureSwizzleChannel;
 import urender.api.UTextureFaceAssignment;
 import urender.api.UTextureFormat;
 import urender.api.UTextureMagFilter;
@@ -23,9 +29,27 @@ import urender.api.UTextureWrap;
 public interface RenderingBackend {
 	public Object getIdent();
 	
+	public void viewport(int x, int y, int w, int h);
+	
+	public void clearDepthSet(float clearDepth);
+	public void clearColorSet(float r, float g, float b, float a);
+	public void clear(UClearMode... modes);
+	
+	public void renderStateBlendColorSet(float r, float g, float b, float a);
+	public void renderStateBlendSet(boolean enabled, UBlendEquation eq, UBlendFunction funcSrc, UBlendFunction funcDst);
+	public void renderStateBlendSet(boolean enabled, UBlendEquation eqRgb, UBlendEquation eqAlpha, UBlendFunction funcSrcRgb, UBlendFunction funcDstRgb, UBlendFunction funcSrcAlpha, UBlendFunction funcDstAlpha);
+	
+	public void renderStateDepthMaskSet(boolean enabled);
+	public void renderStateColorMaskSet(boolean r, boolean g, boolean b, boolean a);
+	
+	public void renderStateCullingSet(UFaceCulling faceCulling);
+	
+	public void renderStateDepthTestSet(boolean enabled, UTestFunction func);
+	
 	public void texInit(UObjHandle tex, UTextureType type);
 	public void texUploadData2D(UObjHandle tex, int width, int height, UTextureFormat format, UTextureFaceAssignment faceAsgn, Buffer data);
 	public void texSetParams(UObjHandle texture, UTextureType type, UTextureWrap wrapU, UTextureWrap wrapV, UTextureMagFilter magFilter, UTextureMinFilter minFilter);
+	public void texSwizzleMask(UObjHandle texture, UTextureType type, UTextureSwizzleChannel r, UTextureSwizzleChannel g, UTextureSwizzleChannel b, UTextureSwizzleChannel a);
 
 	public void texUnitInit(UObjHandle texUnit, int unitIndex);
 	public void texUnitSetTexture(UObjHandle texUnit, UTextureType type, UObjHandle texture);

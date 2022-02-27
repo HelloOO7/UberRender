@@ -1,6 +1,10 @@
-package urender.engine;
+package urender.scenegraph;
 
 import java.util.List;
+import urender.api.backend.RenderingBackend;
+import urender.engine.UMaterial;
+import urender.engine.UMesh;
+import urender.engine.UTexture;
 import urender.engine.shader.UShader;
 import urender.engine.shader.UShaderProgram;
 import urender.engine.shader.UUniformList;
@@ -29,17 +33,18 @@ public class UDrawSources {
 	}
 
 	public void setup(UGfxRenderer rnd) {
+		RenderingBackend core = rnd.getCore();
 		for (UMesh m : meshList) {
-			m.setup(rnd);
+			m.setup(core);
 		}
 		for (UTexture t : textureList) {
-			t.setup(rnd);
+			t.setup(core);
 		}
 		for (UShader shader : shaderList) {
-			shader.setup(rnd);
+			shader.setup(core);
 		}
 		for (UShaderProgram program : shaderProgramList) {
-			program.setup(rnd, shaderList);
+			program.setup(core, shaderList);
 		}
 	}
 }

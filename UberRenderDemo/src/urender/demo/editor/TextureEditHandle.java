@@ -2,6 +2,7 @@ package urender.demo.editor;
 
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
+import urender.api.UTextureFormat;
 import urender.api.UTextureType;
 import urender.engine.UTexture;
 import urender.engine.UTexture2D;
@@ -10,31 +11,35 @@ public class TextureEditHandle implements IEditHandle<UTexture> {
 
 	public final UTexture tex;
 
-	public final ImageIcon icon;
+	public ImageIcon icon;
 
 	public TextureEditHandle(UTexture texture) {
 		this.tex = texture;
 
 		if (texture.getTextureType() == UTextureType.TEX2D) {
 			BufferedImage image = decodeTex((UTexture2D) tex);
-			icon = new ImageIcon(image);
-		}
-		else {
-			icon = null;
+			if (image != null) {
+				icon = new ImageIcon(image);
+			}
 		}
 	}
 
 	private static BufferedImage decodeTex(UTexture2D tex) {
-		BufferedImage img = new BufferedImage(tex.width, tex.height, BufferedImage.TYPE_INT_ARGB);
+		if (tex.format != UTextureFormat.RGBA8) {
+			return null;
+		}
+		int width = tex.getWidth();
+		int height = tex.getHeight();
+		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 		tex.data.rewind();
-		for (int y = 0; y < tex.height; y++) {
-			for (int x = 0; x < tex.width; x++) {
-				img.setRGB(x, tex.height - y - 1, convColor(tex.data.getInt()));
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				img.setRGB(x, height - y - 1, convColor(tex.data.getInt()));
 			}
 		}
 		return img;
 	}
-	
+
 	private static int convColor(int color) {
 		int a = (color >> 0) & 0xFF;
 		int b = (color >> 8) & 0xFF;

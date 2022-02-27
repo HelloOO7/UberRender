@@ -10,13 +10,19 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import urender.api.UBlendEquation;
+import urender.api.UBlendFunction;
 import urender.api.UBufferType;
 import urender.api.UBufferUsageHint;
+import urender.api.UClearMode;
 import urender.api.UDataType;
+import urender.api.UFaceCulling;
 import urender.api.UFramebufferAttachment;
 import urender.api.UObjHandle;
 import urender.api.UPrimitiveType;
 import urender.api.UShaderType;
+import urender.api.UTestFunction;
+import urender.api.UTextureSwizzleChannel;
 import urender.api.UTextureFaceAssignment;
 import urender.api.UTextureFormat;
 import urender.api.UTextureMagFilter;
@@ -129,6 +135,7 @@ public class GLRenderingBackend implements RenderingBackend {
 		if (data != null) {
 			data.rewind();
 		}
+		//System.out.println("GLTexture2D " + width + "x" + height + " format " + format);
 		gl.glTexImage2D(
 			api.getTextureFaceAssignment(faceAsgn),
 			0,
@@ -189,6 +196,9 @@ public class GLRenderingBackend implements RenderingBackend {
 		int ival = index.getValue(this);
 		if (DEBUG) {
 			System.out.println("GL VertexAttrib (index = " + index.getValue(this) + ", size = " + size + ", type = " + type + " (unsigned " + unsigned + ", normalized " + normalized + "), stride = " + stride + ", offset = " + offset + ")");
+		}
+		if (ival == -1) {
+			throw new RuntimeException("Invalid buffer attribute index!");
 		}
 		gl.glEnableVertexAttribArray(ival);
 		gl.glVertexAttribPointer(
@@ -493,6 +503,144 @@ public class GLRenderingBackend implements RenderingBackend {
 		drawBuffer.initialize(this, api.getFramebufferAttachment(attachment, attachmentIndex));
 	}
 
+	@Override
+	public void clearDepthSet(float clearDepth) {
+		gl.glClearDepthf(clearDepth);
+	}
+
+	@Override
+	public void clearColorSet(float r, float g, float b, float a) {
+		gl.glClearColor(r, g, b, a);
+	}
+
+	@Override
+	public void clear(UClearMode... modes) {
+		int mask = 0;
+		for (UClearMode mode : modes) {
+			switch (mode) {
+				case COLOR:
+					mask |= GL4.GL_COLOR_BUFFER_BIT;
+					break;
+				case DEPTH:
+					mask |= GL4.GL_DEPTH_BUFFER_BIT;
+					break;
+				case STENCIL:
+					mask |= GL4.GL_STENCIL_BUFFER_BIT;
+					break;
+			}
+			if (mask != 0) {
+				gl.glClear(mask);
+			}
+		}
+	}
+
+	private final RenderStateTracker blend = new RenderStateTracker(GL4.GL_BLEND);
+
+	@Override
+	public void renderStateBlendSet(boolean enabled, UBlendEquation eq, UBlendFunction funcSrc, UBlendFunction funcDst) {
+		blend.setEnabled(enabled);
+		if (enabled) {
+			gl.glBlendEquation(api.getBlendEquation(eq));
+			gl.glBlendFunc(api.getBlendFunc(funcSrc), api.getBlendFunc(funcDst));
+		}
+	}
+
+	@Override
+	public void renderStateBlendSet(boolean enabled, UBlendEquation eqRgb, UBlendEquation eqAlpha, UBlendFunction funcSrcRgb, UBlendFunction funcDstRgb, UBlendFunction funcSrcAlpha, UBlendFunction funcDstAlpha) {
+		blend.setEnabled(enabled);
+		if (enabled) {
+			gl.glBlendEquationSeparate(api.getBlendEquation(eqRgb), api.getBlendEquation(eqAlpha));
+			gl.glBlendFuncSeparate(api.getBlendFunc(funcSrcRgb), api.getBlendFunc(funcDstRgb), api.getBlendFunc(funcSrcAlpha), api.getBlendFunc(funcDstAlpha));
+		}
+	}
+
+	@Override
+	public void renderStateBlendColorSet(float r, float g, float b, float a) {
+		gl.glBlendColor(r, g, b, a);
+	}
+
+	private final RenderStateTracker depthMask = new RenderStateTracker(0) {
+		@Override
+		protected void doSet(boolean value) {
+			gl.glDepthMask(value);
+		}
+	};
+
+	@Override
+	public void renderStateDepthMaskSet(boolean enabled) {
+		depthMask.setEnabled(enabled);
+	}
+	
+	private RenderStateTracker cullFace = new RenderStateTracker(GL4.GL_CULL_FACE);
+
+	@Override
+	public void renderStateCullingSet(UFaceCulling faceCulling) {
+		cullFace.setEnabled(faceCulling != UFaceCulling.NONE);
+		if (faceCulling != UFaceCulling.NONE) {
+			gl.glCullFace(api.getFaceCulling(faceCulling));
+		}
+	}
+
+	@Override
+	public void renderStateColorMaskSet(boolean r, boolean g, boolean b, boolean a) {
+		gl.glColorMask(r, g, b, a);
+	}
+
+	@Override
+	public void viewport(int x, int y, int w, int h) {
+		gl.glViewport(x, y, w, h);
+	}
+	
+	private final RenderStateTracker depthTest = new RenderStateTracker(GL4.GL_DEPTH_TEST);
+
+	@Override
+	public void renderStateDepthTestSet(boolean enabled, UTestFunction func) {
+		depthTest.setEnabled(enabled);
+		if (enabled) {
+			gl.glDepthFunc(api.getTestFunc(func));
+		}
+	}
+	
+	private final int[] texSwizzleTemp = new int[4];
+
+	@Override
+	public void texSwizzleMask(UObjHandle texture, UTextureType type, UTextureSwizzleChannel r, UTextureSwizzleChannel g, UTextureSwizzleChannel b, UTextureSwizzleChannel a) {
+		texSetCurrent(type, texture);
+		texSwizzleTemp[0] = api.getTextureSwizzleChannel(r);
+		texSwizzleTemp[1] = api.getTextureSwizzleChannel(g);
+		texSwizzleTemp[2] = api.getTextureSwizzleChannel(b);
+		texSwizzleTemp[3] = api.getTextureSwizzleChannel(a);
+		gl.glTexParameteriv(api.getTextureType(type), GL4.GL_TEXTURE_SWIZZLE_RGBA, texSwizzleTemp, 0);
+	}
+
+	private class RenderStateTracker {
+
+		private int glEnum;
+
+		private boolean used = false;
+		private boolean enabled = false;
+
+		public RenderStateTracker(int glEnum) {
+			this.glEnum = glEnum;
+		}
+
+		protected void doSet(boolean value) {
+			if (value) {
+				gl.glEnable(glEnum);
+			} else {
+				gl.glDisable(glEnum);
+			}
+		}
+
+		public void setEnabled(boolean value) {
+			if (!used || enabled != value) {
+				doSet(value);
+				enabled = value;
+				used = true;
+			}
+		}
+	}
+
 	private abstract class StateManager {
 
 		private int currentHandle = -1;
@@ -525,7 +673,7 @@ public class GLRenderingBackend implements RenderingBackend {
 
 		@Override
 		public void bind(int handle) {
-			gl.glEnable(type);
+//			gl.glEnable(type);
 			gl.glBindTexture(type, handle);
 		}
 

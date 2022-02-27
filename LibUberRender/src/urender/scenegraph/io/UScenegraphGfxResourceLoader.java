@@ -8,16 +8,22 @@ public class UScenegraphGfxResourceLoader implements IGfxResourceLoader {
 
 	private static UScenegraphGfxResourceLoader SINGLETON;
 
-	private static final IGfxResourceSerializer[] DEFAULT_SERIALIZERS = new IGfxResourceSerializer[]{
+	private static final IGfxResourceSerializer[] SCENEGRAPH_SERIALIZERS = new IGfxResourceSerializer[]{
 		//COMMON
 		new GfxTextureSerializer(),
 		new GfxMaterialSerializer(),
 		new GfxShaderSerializer(),
 		new GfxMeshSerializer(),
 		new GfxProgramSerializer(),
-		
 		//SCENEGRAPH
 		new GfxModelSerializer()
+	};
+
+	private static final IGfxEnumSerializerProvider[] SCENEGRAPH_ENUM_SERIALIZER_SETS = new IGfxEnumSerializerProvider[]{
+		//COMMON
+		GfxAPIEnumSerializers.getInstance(),
+		GfxEngineEnumSerializers.getInstance()
+	//SCENEGRAPH
 	};
 
 	private UScenegraphGfxResourceLoader() {
@@ -33,8 +39,13 @@ public class UScenegraphGfxResourceLoader implements IGfxResourceLoader {
 	}
 
 	@Override
-	public IGfxResourceSerializer[] getSerializers() {
-		return DEFAULT_SERIALIZERS;
+	public IGfxResourceSerializer[] getResourceSerializers() {
+		return SCENEGRAPH_SERIALIZERS;
+	}
+
+	@Override
+	public IGfxEnumSerializerProvider[] getEnumSerializers() {
+		return SCENEGRAPH_ENUM_SERIALIZER_SETS;
 	}
 
 }

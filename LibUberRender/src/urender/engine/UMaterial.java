@@ -1,5 +1,6 @@
 package urender.engine;
 
+import urender.scenegraph.UGfxRenderer;
 import java.util.ArrayList;
 import java.util.List;
 import urender.api.UObjHandle;
@@ -49,39 +50,40 @@ public class UMaterial extends UGfxEngineObject {
 		return textureMappers;
 	}
 
-	public void configureShader(UShaderProgram shader, UGfxRenderer rnd, List<UTexture> textures) {
-		RenderingBackend core = rnd.getCore();
-
+	public void configureShader(UShaderProgram shader, RenderingBackend rnd, List<UTexture> textures) {
 		shaderParams.setup(shader, rnd);
 
 		int texUnitIdx = 0;
 		for (UTextureMapper mapper : textureMappers) {
-			URenderTarget rt = rnd.findRenderTarget(mapper.textureName);
+			if (mapper.textureName == null) {
+				continue;
+			}
+			URenderTarget rt = null;
 			UTexture tex = rt == null ? UGfxObject.find(textures, mapper.textureName) : null;
 
 			if (tex != null || rt != null) {
 				UObjHandle loc = shader.getUniformLocation(rnd, mapper.shaderVariableName);
-				if (loc.isValid(core)) {
+				if (loc.isValid(rnd)) {
 					UObjHandle texUnit = new UObjHandle();
-					core.texUnitInit(texUnit, texUnitIdx);
+					rnd.texUnitInit(texUnit, texUnitIdx);
 
 					if (tex != null) {
 						//Use texture
-						core.texUnitSetTexture(texUnit, tex.getTextureType(), tex.__handle);
-						core.texSetParams(tex.__handle, tex.getTextureType(), mapper.wrapU, mapper.wrapV, mapper.magFilter, mapper.minFilter);
-					} else if (rt != null) {
+						rnd.texUnitSetTexture(texUnit, tex.getTextureType(), tex.__handle);
+						rnd.texSetParams(tex.__handle, tex.getTextureType(), mapper.wrapU, mapper.wrapV, mapper.magFilter, mapper.minFilter);
+					} /*else if (rt != null) {
 						//Use RenderTexture
-						if (rt.__textureHandle.isInitialized(core)) {
+						if (rt.__textureHandle.isInitialized(rnd)) {
 							//System.out.println("Binding RenderTexture " + rt.name + " to material " + name + " mapper " + mapper.shaderVariableName);
-							core.texUnitSetTexture(texUnit, UTextureType.TEX2D, rt.__textureHandle);
-							core.texSetParams(rt.__textureHandle, UTextureType.TEX2D, mapper.wrapU, mapper.wrapV, mapper.magFilter, mapper.minFilter);
+							rnd.texUnitSetTexture(texUnit, UTextureType.TEX2D, rt.__textureHandle);
+							rnd.texSetParams(rt.__textureHandle, UTextureType.TEX2D, mapper.wrapU, mapper.wrapV, mapper.magFilter, mapper.minFilter);
 						}
 						else {
 							System.err.println("RenderTarget RenderTexture not initialized! RT: " + rt.name);
 						}
-					}
+					}*/
 
-					core.uniformSampler(loc, texUnit);
+					rnd.uniformSampler(loc, texUnit);
 					texUnitIdx++;
 				}
 			} else {

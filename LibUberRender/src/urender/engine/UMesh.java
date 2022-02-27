@@ -4,6 +4,7 @@ import urender.engine.shader.UShaderProgram;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import org.joml.Vector3f;
 import urender.api.UBufferType;
 import urender.api.UBufferUsageHint;
 import urender.api.UDataType;
@@ -23,6 +24,8 @@ public class UMesh extends UGfxEngineObject {
 	ByteBuffer vertexBuffer;
 
 	final List<UVertexAttribute> vertexAttributes = new ArrayList<>();
+	
+	private final UBoundingBox aabb = new UBoundingBox();
 
 	public UPrimitiveType getPrimitiveType() {
 		return primitiveType;
@@ -64,6 +67,18 @@ public class UMesh extends UGfxEngineObject {
 		return indexBuffer.capacity() / indexBufferFormat.sizeof;
 	}
 
+	public void getAABBCenter(Vector3f dest) {
+		aabb.getCenter(dest);
+	}
+	
+	public void getAABBMin(Vector3f dest) {
+		dest.set(aabb.min);
+	}
+	
+	public void getAABBMax(Vector3f dest) {
+		dest.set(aabb.max);
+	}
+	
 	private static void setupBuffer(RenderingBackend core, UBufferType type, UObjHandle handle, ByteBuffer buf) {
 		if (!handle.isInitialized(core)) {
 			core.bufferInit(handle);
@@ -73,31 +88,27 @@ public class UMesh extends UGfxEngineObject {
 		}
 	}
 
-	public void setup(UGfxRenderer rnd) {
-		RenderingBackend core = rnd.getCore();
-
-		setupBuffer(core, UBufferType.IBO, __iboHandle, indexBuffer);
-		setupBuffer(core, UBufferType.VBO, __vboHandle, vertexBuffer);
+	public void setup(RenderingBackend rnd) {
+		setupBuffer(rnd, UBufferType.IBO, __iboHandle, indexBuffer);
+		setupBuffer(rnd, UBufferType.VBO, __vboHandle, vertexBuffer);
 	}
 
-	public void draw(UGfxRenderer rnd, UShaderProgram program) {
-		RenderingBackend core = rnd.getCore();
-
+	public void draw(RenderingBackend rnd, UShaderProgram program) {
 		int stride = getOneVertexSize();
 
 		for (UVertexAttribute a : vertexAttributes) {
 			UObjHandle index = program.getAttributeLocation(rnd, a.shaderAttrName);
-			if (index.isInitialized(core)) {
-				core.bufferAttribPointer(__vboHandle, index, a.elementCount, a.format, a.unsigned, a.normalized, stride, a.offset);
+			if (index.isValid(rnd)) {
+				rnd.bufferAttribPointer(__vboHandle, index, a.elementCount, a.format, a.unsigned, a.normalized, stride, a.offset);
 			}
 		}
 
-		core.buffersDrawIndexed(__vboHandle, primitiveType, __iboHandle, indexBufferFormat, getIndexCount());
+		rnd.buffersDrawIndexed(__vboHandle, primitiveType, __iboHandle, indexBufferFormat, getIndexCount());
 
 		for (UVertexAttribute a : vertexAttributes) {
 			UObjHandle index = program.getAttributeLocation(rnd, a.shaderAttrName);
-			if (index.isInitialized(core)) {
-				core.bufferAttribDisable(__vboHandle, index);
+			if (index.isValid(rnd)) {
+				rnd.bufferAttribDisable(__vboHandle, index);
 			}
 		}
 	}

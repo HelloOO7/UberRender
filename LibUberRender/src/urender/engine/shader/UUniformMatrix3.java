@@ -2,7 +2,7 @@ package urender.engine.shader;
 
 import org.joml.Matrix3f;
 import urender.api.UObjHandle;
-import urender.engine.UGfxRenderer;
+import urender.api.backend.RenderingBackend;
 
 public class UUniformMatrix3 extends UUniform<Matrix3f> {
 
@@ -15,11 +15,11 @@ public class UUniformMatrix3 extends UUniform<Matrix3f> {
 	}
 
 	@Override
-	public void setData(UObjHandle loc, UGfxRenderer rnd) {
+	protected void setDataImpl(UObjHandle loc, RenderingBackend rnd) {
 		if (value.length > 1) {
-			rnd.getCore().uniformMat3v(loc, value);
+			rnd.uniformMat3v(loc, value);
 		} else {
-			rnd.getCore().uniformMat3(loc, value[0]);
+			rnd.uniformMat3(loc, value[0]);
 		}
 	}
 

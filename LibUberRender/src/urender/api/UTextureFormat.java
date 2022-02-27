@@ -6,6 +6,9 @@ public enum UTextureFormat {
 	RG8,
 	R8,
 	
+	R16F,
+	R16UI,
+	
 	FLOAT32,
 	RGBA16F,
 	

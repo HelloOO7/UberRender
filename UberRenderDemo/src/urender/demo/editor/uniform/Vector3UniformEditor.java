@@ -46,17 +46,17 @@ public class Vector3UniformEditor extends javax.swing.JPanel implements IUniform
         xValueLabel.setForeground(new java.awt.Color(255, 0, 0));
         xValueLabel.setText("X");
 
-        xField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.000"))));
+        xField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.000000"))));
 
         yValueLabel.setForeground(new java.awt.Color(0, 153, 0));
         yValueLabel.setText("Y");
 
-        yField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.000"))));
+        yField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.000000"))));
 
         zValueLabel.setForeground(new java.awt.Color(0, 0, 204));
         zValueLabel.setText("Z");
 
-        zField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.000"))));
+        zField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.000000"))));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

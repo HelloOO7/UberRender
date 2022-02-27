@@ -15,8 +15,6 @@ import urender.common.io.base.iface.ReadableStream;
 import urender.common.io.base.iface.WriteableStream;
 import urender.common.io.base.impl.InputStreamReadable;
 import urender.common.io.base.impl.access.FileStream;
-import urender.common.io.base.impl.ext.data.DataInStream;
-import urender.common.io.base.impl.ext.data.DataOutStream;
 import urender.g3dio.ugfx.loaders.IGfxResourceLoader;
 import urender.g3dio.ugfx.serializers.IGfxResourceSerializer;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
@@ -42,6 +40,8 @@ public class UGfxResource {
 			loadResource(in, loader, consumer);
 		} catch (IOException ex) {
 			Logger.getLogger(UGfxResource.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (InvalidMagicException ex) {
+			throw new RuntimeException("Failed to read UGfxResource " + f.getAbsolutePath(), ex);
 		}
 	}
 	
@@ -55,7 +55,7 @@ public class UGfxResource {
 	}
 
 	public static void loadResource(ReadableStream stream, IGfxResourceLoader loader, IGfxResourceConsumer consumer) throws IOException {
-		UGfxDataInput in = new UGfxDataInput(stream);
+		UGfxDataInput in = new UGfxDataInput(stream, loader);
 
 		GfxBinaryHeader header = new GfxBinaryHeader(in);
 
@@ -67,7 +67,7 @@ public class UGfxResource {
 
 		Map<String, IGfxResourceSerializer> serializers = new HashMap<>();
 
-		for (IGfxResourceSerializer srl : loader.getSerializers()) {
+		for (IGfxResourceSerializer srl : loader.getResourceSerializers()) {
 			serializers.put(srl.getTagIdent(), srl);
 		}
 
@@ -76,7 +76,7 @@ public class UGfxResource {
 		))) {
 			IGfxResourceSerializer srl = serializers.get(tag);
 			if (srl == null) {
-				throw new IOException("Non-deserializable resource tag: " + tag);
+				throw new IOException("Non-deserializable resource tag: " + tag + " at " + Integer.toHexString(in.getPosition() - UGFX_COMMON_TAGSTR_SIZE));
 			} else {
 				srl.deserialize(in, consumer);
 			}
@@ -84,13 +84,13 @@ public class UGfxResource {
 	}
 
 	public static void writeResource(WriteableStream stream, IGfxResourceLoader loader, IGfxResourceProvider provider) throws IOException {
-		DataOutStream out = new DataOutStream(stream);
+		UGfxDataOutput out = new UGfxDataOutput(stream, loader);
 
 		new GfxBinaryHeader().write(out);
 
 		Object obj;
 
-		IGfxResourceSerializer[] serializers = loader.getSerializers();
+		IGfxResourceSerializer[] serializers = loader.getResourceSerializers();
 
 		while ((obj = provider.nextObject()) != null) {
 			IGfxResourceSerializer srl = null;

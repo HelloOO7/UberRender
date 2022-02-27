@@ -2,7 +2,7 @@ package urender.engine.shader;
 
 import org.joml.Vector4f;
 import urender.api.UObjHandle;
-import urender.engine.UGfxRenderer;
+import urender.api.backend.RenderingBackend;
 
 public class UUniformVector4 extends UUniform<Vector4f> {
 
@@ -15,11 +15,11 @@ public class UUniformVector4 extends UUniform<Vector4f> {
 	}
 
 	@Override
-	public void setData(UObjHandle loc, UGfxRenderer rnd) {
+	protected void setDataImpl(UObjHandle loc, RenderingBackend rnd) {
 		if (value.length > 1) {
-			rnd.getCore().uniformVec4v(loc, value);
+			rnd.uniformVec4v(loc, value);
 		} else {
-			rnd.getCore().uniformVec4(loc, value[0]);
+			rnd.uniformVec4(loc, value[0]);
 		}
 	}
 

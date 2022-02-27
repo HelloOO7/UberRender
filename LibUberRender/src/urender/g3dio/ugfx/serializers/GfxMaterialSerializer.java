@@ -4,7 +4,6 @@ import java.io.IOException;
 import urender.api.UTextureMagFilter;
 import urender.api.UTextureMinFilter;
 import urender.api.UTextureWrap;
-import urender.common.io.base.iface.DataInputEx;
 import urender.common.io.base.iface.DataOutputEx;
 import urender.engine.UMaterial;
 import urender.engine.UMaterialBuilder;
@@ -12,36 +11,11 @@ import urender.engine.UMaterialDrawLayer;
 import urender.engine.UTextureMapper;
 import urender.engine.UTextureMapperBuilder;
 import urender.g3dio.ugfx.UGfxDataInput;
+import urender.g3dio.ugfx.UGfxDataOutput;
 import urender.g3dio.ugfx.UGfxFormatRevisions;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
 public class GfxMaterialSerializer implements IGfxResourceSerializer<UMaterial> {
-
-	private static final UTextureMagFilter[] MAG_FILTER_LOOKUP = new UTextureMagFilter[]{
-		UTextureMagFilter.LINEAR,
-		UTextureMagFilter.NEAREST_NEIGHBOR
-	};
-
-	private static final UTextureMinFilter[] MIN_FILTER_LOOKUP = new UTextureMinFilter[]{
-		UTextureMinFilter.LINEAR,
-		UTextureMinFilter.NEAREST_NEIGHBOR,
-		UTextureMinFilter.LINEAR_MIPMAP_LINEAR,
-		UTextureMinFilter.LINEAR_MIPMAP_NEAREST,
-		UTextureMinFilter.NEAREST_MIPMAP_LINEAR,
-		UTextureMinFilter.LINEAR_MIPMAP_NEAREST
-	};
-
-	private static final UTextureWrap[] WRAP_LOOKUP = new UTextureWrap[]{
-		UTextureWrap.REPEAT,
-		UTextureWrap.MIRRORED_REPEAT,
-		UTextureWrap.CLAMP_TO_EDGE,
-		UTextureWrap.CLAMP_TO_BORDER
-	};
-
-	private static final UMaterialDrawLayer.ShadingMethod[] SHADING_METHOD_LOOKUP = new UMaterialDrawLayer.ShadingMethod[]{
-		UMaterialDrawLayer.ShadingMethod.FORWARD,
-		UMaterialDrawLayer.ShadingMethod.DEFERRED
-	};
 
 	@Override
 	public String getTagIdent() {
@@ -55,7 +29,7 @@ public class GfxMaterialSerializer implements IGfxResourceSerializer<UMaterial> 
 		bld.setName(in.readString());
 		bld.setShaderProgramName(in.readString());
 		if (in.versionOver(UGfxFormatRevisions.MATERIAL_DRAW_LAYERS)) {
-			bld.setDrawLayer(new UMaterialDrawLayer(SHADING_METHOD_LOOKUP[in.read()], in.readUnsignedShort()));
+			bld.setDrawLayer(new UMaterialDrawLayer(in.readEnum(UMaterialDrawLayer.ShadingMethod.class), in.readUnsignedShort()));
 		}
 
 		int mapperCount = in.read();
@@ -66,10 +40,10 @@ public class GfxMaterialSerializer implements IGfxResourceSerializer<UMaterial> 
 				mapperBld
 					.setTextureName(in.readString())
 					.setShaderVariableName(in.readString())
-					.setMagFilter(MAG_FILTER_LOOKUP[in.read()])
-					.setMinFilter(MIN_FILTER_LOOKUP[in.read()])
-					.setWrapU(WRAP_LOOKUP[in.read()])
-					.setWrapV(WRAP_LOOKUP[in.read()])
+					.setMagFilter(in.readEnum(UTextureMagFilter.class))
+					.setMinFilter(in.readEnum(UTextureMinFilter.class))
+					.setWrapU(in.readEnum(UTextureWrap.class))
+					.setWrapV(in.readEnum(UTextureWrap.class))
 					.build()
 			);
 		}
@@ -82,21 +56,21 @@ public class GfxMaterialSerializer implements IGfxResourceSerializer<UMaterial> 
 	}
 
 	@Override
-	public void serialize(UMaterial mat, DataOutputEx out) throws IOException {
+	public void serialize(UMaterial mat, UGfxDataOutput out) throws IOException {
 		out.writeString(mat.getName());
 		out.writeString(mat.getShaderProgramName());
-		out.write(IGfxResourceSerializer.findEnumIndex(SHADING_METHOD_LOOKUP, mat.getDrawLayer().method));
+		out.writeEnum(mat.getDrawLayer().method);
 		out.writeShort(mat.getDrawLayer().priority);
 
 		out.write(mat.getTextureMapperCount());
 		for (UTextureMapper mapper : mat.getTextureMappers()) {
 			out.writeString(mapper.getTextureName());
 			out.writeString(mapper.getShaderVariableName());
-
-			out.write(IGfxResourceSerializer.findEnumIndex(MAG_FILTER_LOOKUP, mapper.getMagFilter()));
-			out.write(IGfxResourceSerializer.findEnumIndex(MIN_FILTER_LOOKUP, mapper.getMinFilter()));
-			out.write(IGfxResourceSerializer.findEnumIndex(WRAP_LOOKUP, mapper.getWrapU()));
-			out.write(IGfxResourceSerializer.findEnumIndex(WRAP_LOOKUP, mapper.getWrapV()));
+			
+			out.writeEnum(mapper.getMagFilter());
+			out.writeEnum(mapper.getMinFilter());
+			out.writeEnum(mapper.getWrapU());
+			out.writeEnum(mapper.getWrapV());
 		}
 
 		GfxUniformListIO.writeUniformList(mat.shaderParams, out);

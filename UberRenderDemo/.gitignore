@@ -1,2 +1,9 @@
 build/
 dist/
+_internal_testdata/
+HeightmapTest.gfx
+Helicopter2.gfx
+StarTest.gfx
+Train.gfx
+UFC.gfx
+UFCForward.gfx
