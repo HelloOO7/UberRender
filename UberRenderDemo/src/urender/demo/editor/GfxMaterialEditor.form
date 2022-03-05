@@ -423,7 +423,7 @@
                     </Component>
                     <Component class="javax.swing.JComboBox" name="shadingLayer">
                       <AuxValues>
-                        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;UMaterialDrawLayer.ShadingMethod&gt;"/>
+                        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;UShadingMethod&gt;"/>
                       </AuxValues>
                     </Component>
                     <Component class="javax.swing.JLabel" name="shadingPriorityLabel">

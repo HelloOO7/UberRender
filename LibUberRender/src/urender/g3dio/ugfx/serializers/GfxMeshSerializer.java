@@ -12,6 +12,7 @@ import urender.engine.UVertexAttribute;
 import urender.engine.UVertexAttributeBuilder;
 import urender.g3dio.ugfx.UGfxDataInput;
 import urender.g3dio.ugfx.UGfxDataOutput;
+import urender.g3dio.ugfx.UGfxFormatRevisions;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
 public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
@@ -49,27 +50,54 @@ public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
 		bld.setPrimitiveType(in.readEnum(UPrimitiveType.class));
 
 		UDataType iboFormat = in.readEnum(UDataType.class);
+		if (!in.versionOver(UGfxFormatRevisions.SEPARATE_UNSIGNED_FORMATS)) {
+			iboFormat = makeTypeUnsigned(iboFormat);
+		}
 
 		int vtxAttrCount = in.read();
 		UVertexAttributeBuilder attrBld = new UVertexAttributeBuilder();
 		for (int i = 0; i < vtxAttrCount; i++) {
 			attrBld.reset();
 
-			bld.addVertexAttribute(
-				attrBld
-					.setShaderAttrName(in.readString())
-					.setOffset(in.readUnsignedShort())
-					.setElementCount(in.read())
-					.setFormat(in.readEnum(UDataType.class))
-					.setTypeUnsigned(in.readBoolean())
-					.setNormalized(in.readBoolean())
-					.build()
-			);
+			attrBld
+				.setShaderAttrName(in.readString())
+				.setOffset(in.readUnsignedShort())
+				.setElementCount(in.read());
+
+			UDataType format = in.readEnum(UDataType.class);
+
+			if (!in.versionOver(UGfxFormatRevisions.SEPARATE_UNSIGNED_FORMATS)) {
+				boolean unsigned = in.readBoolean();
+
+				if (unsigned) {
+					format = makeTypeUnsigned(format);
+				}
+			}
+
+			attrBld.setFormat(format);
+			attrBld.setNormalized(in.readBoolean());
+
+			bld.addVertexAttribute(attrBld.build());
 		}
 
 		bld.setIBO(iboFormat, readRawBuffer(in)).setVBO(readRawBuffer(in));
 
 		consumer.loadObject(bld.build());
+	}
+
+	private static UDataType makeTypeUnsigned(UDataType type) {
+		switch (type) {
+			case INT16:
+				type = UDataType.UINT16;
+				break;
+			case INT32:
+				type = UDataType.UINT32;
+				break;
+			case INT8:
+				type = UDataType.UINT8;
+				break;
+		}
+		return type;
 	}
 
 	@Override
@@ -88,7 +116,6 @@ public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
 			out.writeShort(a.getOffset());
 			out.write(a.getElementCount());
 			out.writeEnum(a.getFormat());
-			out.writeBoolean(a.getTypeIsUnsigned());
 			out.writeBoolean(a.isNormalized());
 		}
 

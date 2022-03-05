@@ -7,23 +7,49 @@ import org.joml.Vector3f;
 import urender.common.math.Matrix4Unit;
 import urender.engine.shader.UUniform;
 
+/**
+ * Scene description and scenegraph root.
+ */
 public class UScene extends UGfxScenegraphObject {
 
 	private final Matrix4Unit mtxMem = new Matrix4Unit(4);
 
+	/**
+	 * Camera used for all scene members and calculations.
+	 */
 	public UCamera camera = new UCameraViewpoint();
+	/**
+	 * Light source list.
+	 */
 	public List<ULight> lights = new ArrayList<>();
 
 	private final USceneNode rootNode = new USceneNode();
 
+	/**
+	 * Adds a scene node to this scene.
+	 *
+	 * @param child
+	 */
 	public void addChild(USceneNode child) {
 		rootNode.parentRelation.getChildren().add(child);
 	}
 
+	/**
+	 * Adds a shader uniform value that is shared for all children.
+	 *
+	 * @param uniform
+	 */
 	public void addGlobalUniform(UUniform uniform) {
 		rootNode.uniforms.add(uniform);
 	}
-	
+
+	/**
+	 * This method should be overriden to return a list of uniforms that are crucial to rendering this scene
+	 * regardless of shading mode or node tree, so that they are used for both the G-buffer composer and
+	 * forward rendering.
+	 *
+	 * @return
+	 */
 	public List<UUniform> getSceneUniforms() {
 		return new ArrayList<>();
 	}
@@ -33,6 +59,11 @@ public class UScene extends UGfxScenegraphObject {
 		return UGfxScenegraphObjectType.SCENE;
 	}
 
+	/**
+	 * Calculates a render queue ready to be fed to a rendering engine.
+	 *
+	 * @return
+	 */
 	public URenderQueue calcRenderQueue() {
 		URenderQueue queue = new URenderQueue();
 

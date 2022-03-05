@@ -4,9 +4,19 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+/**
+ * IGfxEnumSerializer implementation using lookup tables.
+ *
+ * @param <E> Type of the enum that can be serialized.
+ */
 public abstract class AbstractGfxEnumSerializer<E extends Enum> implements IGfxEnumSerializer<E> {
+
+	/**
+	 * Gets an array of all constants of the enum class that is to be used as index-element lookup.
+	 * @return 
+	 */
 	protected abstract E[] lut();
-	
+
 	@Override
 	public E readValue(DataInput in) throws IOException {
 		E[] lut = lut();
@@ -14,8 +24,7 @@ public abstract class AbstractGfxEnumSerializer<E extends Enum> implements IGfxE
 		int index;
 		if (len < 256) {
 			index = in.readUnsignedByte();
-		}
-		else {
+		} else {
 			index = in.readUnsignedShort();
 		}
 		if (index >= 0 && index < lut.length) {
@@ -23,7 +32,7 @@ public abstract class AbstractGfxEnumSerializer<E extends Enum> implements IGfxE
 		}
 		return null;
 	}
-	
+
 	@Override
 	public void writeValue(E value, DataOutput out) throws IOException {
 		E[] lut = lut();
@@ -31,12 +40,11 @@ public abstract class AbstractGfxEnumSerializer<E extends Enum> implements IGfxE
 		int index = findEnumIndex(lut, value);
 		if (len < 256) {
 			out.writeByte(index);
-		}
-		else {
+		} else {
 			out.writeShort(len);
 		}
 	}
-	
+
 	public static <E> int findEnumIndex(E[] enums, E value) {
 		for (int i = 0; i < enums.length; i++) {
 			if (enums[i] == value) {

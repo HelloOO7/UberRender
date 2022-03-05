@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package urender.demo.editor;
 
 import java.awt.Component;
@@ -24,9 +19,9 @@ import javax.swing.text.PlainDocument;
 import org.joml.Vector4f;
 import urender.api.UShaderType;
 import urender.common.fs.FSUtil;
+import urender.engine.UShadingMethod;
 import urender.engine.UGfxObject;
 import urender.engine.UMaterial;
-import urender.engine.UMaterialDrawLayer;
 import urender.engine.UTexture;
 import urender.engine.UTextureMapper;
 import urender.engine.shader.UShader;
@@ -1325,14 +1320,14 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 
     private void btnDeferredToForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeferredToForwardActionPerformed
 		for (MaterialEditHandle mat : materialListModel) {
-			mat.shadingMethodModel.setSelectedItem(UMaterialDrawLayer.ShadingMethod.FORWARD);
+			mat.shadingMethodModel.setSelectedItem(UShadingMethod.FORWARD);
 			mat.save();
 		}
     }//GEN-LAST:event_btnDeferredToForwardActionPerformed
 
     private void btnForwardToDeferredActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnForwardToDeferredActionPerformed
         for (MaterialEditHandle mat : materialListModel) {
-			mat.shadingMethodModel.setSelectedItem(UMaterialDrawLayer.ShadingMethod.DEFERRED);
+			mat.shadingMethodModel.setSelectedItem(UShadingMethod.DEFERRED);
 			mat.save();
 		}
     }//GEN-LAST:event_btnForwardToDeferredActionPerformed
@@ -1404,7 +1399,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
     private javax.swing.JComboBox<ShaderEditHandle> shaderSelectF;
     private javax.swing.JPanel shaderSelectPanel;
     private javax.swing.JComboBox<ShaderEditHandle> shaderSelectV;
-    private javax.swing.JComboBox<UMaterialDrawLayer.ShadingMethod> shadingLayer;
+    private javax.swing.JComboBox<UShadingMethod> shadingLayer;
     private javax.swing.JLabel shadingLayerLabel;
     private javax.swing.JSpinner shadingPriority;
     private javax.swing.JLabel shadingPriorityLabel;

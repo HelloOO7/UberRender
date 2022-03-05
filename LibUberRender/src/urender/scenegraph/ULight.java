@@ -7,5 +7,10 @@ public abstract class ULight extends UGfxScenegraphObject {
 		return UGfxScenegraphObjectType.LIGHT;
 	}
 
+	/**
+	 * Gets the non-abstract type of the light.
+	 *
+	 * @return A ULightType constant whose value guarantees safe type casting.
+	 */
 	public abstract ULightType getLightType();
 }

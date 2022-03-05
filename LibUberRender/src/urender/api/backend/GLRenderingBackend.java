@@ -35,6 +35,7 @@ public class GLRenderingBackend implements RenderingBackend {
 	private static final boolean DEBUG = false;
 
 	private GL4 gl;
+	private int identity;
 
 	private APITranslator api = new GLAPITranslator();
 
@@ -70,6 +71,15 @@ public class GLRenderingBackend implements RenderingBackend {
 			gl.glBindRenderbuffer(GL4.GL_RENDERBUFFER, handle);
 		}
 	};
+	private final RenderStateTracker blend = new RenderStateTracker(GL4.GL_BLEND);
+	private final RenderStateTracker depthTest = new RenderStateTracker(GL4.GL_DEPTH_TEST);
+	private final RenderStateTracker cullFace = new RenderStateTracker(GL4.GL_CULL_FACE);
+	private final RenderStateTracker depthMask = new RenderStateTracker(0) {
+		@Override
+		protected void doSet(boolean value) {
+			gl.glDepthMask(value);
+		}
+	};
 
 	private void initState() {
 		for (UTextureType t : UTextureType.values()) {
@@ -79,18 +89,36 @@ public class GLRenderingBackend implements RenderingBackend {
 
 	private final int[] glAllocTemp = new int[1];
 
-	public GLRenderingBackend(GL4 gl) {
+	public GLRenderingBackend() {
 		initState();
-		setGL(gl);
 	}
 
-	public final void setGL(GL4 gl) {
+	public final void setGL(GL4 gl, int identity) {
+		if (this.gl != gl) {
+			resetStateMonitors();
+		}
 		this.gl = gl;
+		this.identity = identity;
+	}
+
+	private void resetStateMonitors() {
+		for (TextureStateManager t : currentTextures.values()) {
+			t.reset();
+		}
+		currentFramebuffer.reset();
+		currentIBO.reset();
+		currentRenderBuffer.reset();
+		currentTexUnit.reset();
+		currentVBO.reset();
+		blend.reset();
+		depthTest.reset();
+		depthMask.reset();
+		cullFace.reset();
 	}
 
 	@Override
 	public Object getIdent() {
-		return gl;
+		return identity;
 	}
 
 	private void texSetCurrent(UTextureType type, UObjHandle handle) {
@@ -164,7 +192,7 @@ public class GLRenderingBackend implements RenderingBackend {
 		if (DEBUG) {
 			System.out.println("GL DrawElements (vbo = " + vbo.getValue(this) + ", PrimitiveType = " + primitiveType + ", Count = " + count + ", ibo = " + ibo.getValue(this) + ", IBOFormat = " + iboFormat + ")");
 		}
-		gl.glDrawElements(api.getPrimitiveType(primitiveType), count, api.getDataType(iboFormat, true), 0);
+		gl.glDrawElements(api.getPrimitiveType(primitiveType), count, api.getDataType(iboFormat), 0);
 	}
 
 	@Override
@@ -191,11 +219,11 @@ public class GLRenderingBackend implements RenderingBackend {
 	}
 
 	@Override
-	public void bufferAttribPointer(UObjHandle vbo, UObjHandle index, int size, UDataType type, boolean unsigned, boolean normalized, int stride, long offset) {
+	public void bufferAttribPointer(UObjHandle vbo, UObjHandle index, int size, UDataType type, boolean normalized, int stride, long offset) {
 		vboSetCurrent(vbo);
 		int ival = index.getValue(this);
 		if (DEBUG) {
-			System.out.println("GL VertexAttrib (index = " + index.getValue(this) + ", size = " + size + ", type = " + type + " (unsigned " + unsigned + ", normalized " + normalized + "), stride = " + stride + ", offset = " + offset + ")");
+			System.out.println("GL VertexAttrib (index = " + index.getValue(this) + ", size = " + size + ", type = " + type + ", normalized " + normalized + "), stride = " + stride + ", offset = " + offset + ")");
 		}
 		if (ival == -1) {
 			throw new RuntimeException("Invalid buffer attribute index!");
@@ -204,7 +232,7 @@ public class GLRenderingBackend implements RenderingBackend {
 		gl.glVertexAttribPointer(
 			ival,
 			size,
-			api.getDataType(type, unsigned),
+			api.getDataType(type),
 			normalized,
 			stride,
 			offset
@@ -312,13 +340,8 @@ public class GLRenderingBackend implements RenderingBackend {
 
 	@Override
 	public void flush() {
-		currentIBO.flush();
-		currentVBO.flush();
-		currentTexUnit.flush();
-		for (TextureStateManager tex : currentTextures.values()) {
-			tex.flush();
-		}
 		gl.glFlush();
+		resetStateMonitors();
 	}
 
 	@Override
@@ -534,8 +557,6 @@ public class GLRenderingBackend implements RenderingBackend {
 		}
 	}
 
-	private final RenderStateTracker blend = new RenderStateTracker(GL4.GL_BLEND);
-
 	@Override
 	public void renderStateBlendSet(boolean enabled, UBlendEquation eq, UBlendFunction funcSrc, UBlendFunction funcDst) {
 		blend.setEnabled(enabled);
@@ -559,19 +580,10 @@ public class GLRenderingBackend implements RenderingBackend {
 		gl.glBlendColor(r, g, b, a);
 	}
 
-	private final RenderStateTracker depthMask = new RenderStateTracker(0) {
-		@Override
-		protected void doSet(boolean value) {
-			gl.glDepthMask(value);
-		}
-	};
-
 	@Override
 	public void renderStateDepthMaskSet(boolean enabled) {
 		depthMask.setEnabled(enabled);
 	}
-	
-	private RenderStateTracker cullFace = new RenderStateTracker(GL4.GL_CULL_FACE);
 
 	@Override
 	public void renderStateCullingSet(UFaceCulling faceCulling) {
@@ -590,8 +602,6 @@ public class GLRenderingBackend implements RenderingBackend {
 	public void viewport(int x, int y, int w, int h) {
 		gl.glViewport(x, y, w, h);
 	}
-	
-	private final RenderStateTracker depthTest = new RenderStateTracker(GL4.GL_DEPTH_TEST);
 
 	@Override
 	public void renderStateDepthTestSet(boolean enabled, UTestFunction func) {
@@ -600,7 +610,7 @@ public class GLRenderingBackend implements RenderingBackend {
 			gl.glDepthFunc(api.getTestFunc(func));
 		}
 	}
-	
+
 	private final int[] texSwizzleTemp = new int[4];
 
 	@Override
@@ -622,6 +632,10 @@ public class GLRenderingBackend implements RenderingBackend {
 
 		public RenderStateTracker(int glEnum) {
 			this.glEnum = glEnum;
+		}
+		
+		public void reset() {
+			used = false;
 		}
 
 		protected void doSet(boolean value) {
@@ -656,7 +670,7 @@ public class GLRenderingBackend implements RenderingBackend {
 			}
 		}
 
-		public void flush() {
+		public void reset() {
 			currentHandle = -1;
 		}
 

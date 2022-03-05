@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import org.joml.Matrix4f;
 import urender.api.backend.RenderingBackend;
+import urender.engine.UShadingMethod;
 import urender.engine.UGfxObject;
 import urender.engine.UMaterial;
 import urender.engine.UMaterialDrawLayer;
@@ -18,31 +19,65 @@ public class URenderQueue {
 	List<UDrawSources> drawSourcesAll = new ArrayList<>();
 	List<URenderQueueMeshState> queue = new ArrayList<>();
 
+	/**
+	 * Registers a list of draw sources for setup.
+	 *
+	 * @param sources
+	 */
 	public void registDrawSources(UDrawSources sources) {
 		drawSourcesAll.add(sources);
 	}
 
+	/**
+	 * Adds a calculated object state to the render queue.
+	 *
+	 * @param state
+	 */
 	public void enqueue(URenderQueueMeshState state) {
 		queue.add(state);
 	}
 
+	/**
+	 * Sorts the render queue by shading layer/priority.
+	 */
 	public void sort() {
 		Collections.sort(queue);
 	}
-	
+
+	/**
+	 * Sorts the render queue using a user-defined algorithm.
+	 *
+	 * @param sorter
+	 */
 	public void sort(URenderQueueSorter sorter) {
 		queue.sort(sorter);
 	}
 
+	/**
+	 * Gets an iterable of all registered draw sources.
+	 *
+	 * @return
+	 */
 	public Iterable<UDrawSources> drawSources() {
 		return drawSourcesAll;
 	}
 
+	/**
+	 * Gets an iterable of all queued render objects.
+	 *
+	 * @return
+	 */
 	public Iterable<URenderQueueMeshState> queue() {
 		return queue;
 	}
-	
-	public int getMaxRenderPriority(UMaterialDrawLayer.ShadingMethod sm) {
+
+	/**
+	 * Deduces the maximum used render priority of a shading layer.
+	 *
+	 * @param sm
+	 * @return
+	 */
+	public int getMaxRenderPriority(UShadingMethod sm) {
 		int max = -1;
 		for (URenderQueueMeshState s : queue) {
 			int p;
@@ -55,15 +90,34 @@ public class URenderQueue {
 
 	public static class URenderQueueNodeState {
 
+		/**
+		 * View/camera matrix.
+		 */
 		public Matrix4f viewMatrix;
+		/**
+		 * Projection matrix.
+		 */
 		public Matrix4f projectionMatrix;
-
+		/**
+		 * Model/world matrix.
+		 */
 		public Matrix4f modelMatrix;
 
+		/**
+		 * List of all graphics resources available to the node.
+		 */
 		public final UDrawSources drawSources;
 
+		/**
+		 * List of all global shader parameters available to the node.
+		 */
 		public final UUniformList uniforms = new UUniformList();
 
+		/**
+		 * Creates a render queue node state based off a scene node.
+		 *
+		 * @param node
+		 */
 		public URenderQueueNodeState(USceneNode node) {
 			this.drawSources = node.getDrawSources();
 			uniforms.addAll(node.uniforms);
@@ -72,13 +126,24 @@ public class URenderQueue {
 
 	public static class URenderQueueMeshState implements Comparable<URenderQueueMeshState> {
 
+		/**
+		 * Render queue state of the parent node.
+		 */
 		public final URenderQueueNodeState nodeState;
-
+		/**
+		 * Mesh instance that this state targets.
+		 */
 		public final UModel.UMeshInstance meshInstance;
 
 		private final UMesh mesh;
 		private final UMaterial mat;
-		
+
+		/**
+		 * Creates a render queue node state for a mesh instance.
+		 *
+		 * @param nodeState State of the parent node.
+		 * @param meshInstance The mesh instance to target.
+		 */
 		public URenderQueueMeshState(URenderQueueNodeState nodeState, UModel.UMeshInstance meshInstance) {
 			this.nodeState = nodeState;
 			this.meshInstance = meshInstance;
@@ -86,10 +151,21 @@ public class URenderQueue {
 			mat = UGfxObject.find(nodeState.drawSources.materialList, meshInstance.materialName);
 		}
 
+		/**
+		 * Gets the render priority of the underlying material.
+		 *
+		 * @return
+		 */
 		public int getDrawPriority() {
 			return mat.getDrawLayer().priority;
 		}
-		
+
+		/**
+		 * Configures materials and shaders and draws the mesh.
+		 * The mesh will not be drawn if its shading method is non-current.
+		 *
+		 * @param rnd Rendering engine.
+		 */
 		public void draw(UGfxRenderer rnd) {
 			if (mesh != null && mat != null) {
 				RenderingBackend core = rnd.getCore();
@@ -102,9 +178,9 @@ public class URenderQueue {
 					if (shader != null) {
 						if (shader != drawState.currentShader || !drawState.currentUniformSet.valuesMatch(nodeState.uniforms)) {
 							shader.use(core);
-							
+
 							nodeState.uniforms.setup(shader, core);
-							drawState.sceneUniformTemp.setup(shader, core);
+							drawState.commonUniforms.setup(shader, core);
 
 							drawState.currentUniformSet = nodeState.uniforms;
 						}
@@ -129,7 +205,7 @@ public class URenderQueue {
 			}
 		}
 
-		private static final UMaterialDrawLayer DUMMY_DRAW_LAYER = new UMaterialDrawLayer(UMaterialDrawLayer.ShadingMethod.FORWARD, 0);
+		private static final UMaterialDrawLayer DUMMY_DRAW_LAYER = new UMaterialDrawLayer(UShadingMethod.FORWARD, 0);
 
 		@Override
 		public int compareTo(URenderQueueMeshState o) {

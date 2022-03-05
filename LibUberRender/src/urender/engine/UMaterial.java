@@ -1,10 +1,8 @@
 package urender.engine;
 
-import urender.scenegraph.UGfxRenderer;
 import java.util.ArrayList;
 import java.util.List;
 import urender.api.UObjHandle;
-import urender.api.UTextureType;
 import urender.api.backend.RenderingBackend;
 import urender.engine.shader.UShaderProgram;
 import urender.engine.shader.UUniformList;
@@ -13,7 +11,7 @@ public class UMaterial extends UGfxEngineObject {
 
 	String shaderProgramName;
 
-	UMaterialDrawLayer drawLayer = new UMaterialDrawLayer(UMaterialDrawLayer.ShadingMethod.DEFERRED, 0);
+	UMaterialDrawLayer drawLayer = new UMaterialDrawLayer(UShadingMethod.DEFERRED, 0);
 
 	public final UUniformList shaderParams = new UUniformList();
 
@@ -22,34 +20,78 @@ public class UMaterial extends UGfxEngineObject {
 	UMaterial() {
 	}
 
+	/**
+	 * Gets the name of the shader program to be used for rendering using this material.
+	 *
+	 * @return Local name of the shader program.
+	 */
 	public String getShaderProgramName() {
 		return shaderProgramName;
 	}
 
+	/**
+	 * Gets the layer that meshes that use this material should be drawn on.
+	 *
+	 * @return
+	 */
 	public UMaterialDrawLayer getDrawLayer() {
 		return drawLayer;
 	}
 
+	/**
+	 * Sets the layer that meshes that use this material should be drawn on.
+	 *
+	 * @param drawLayer
+	 */
 	public void setDrawLayer(UMaterialDrawLayer drawLayer) {
 		this.drawLayer = drawLayer;
 	}
 
+	/**
+	 * Changes the shader program bound to this material.
+	 *
+	 * @param program A shader program.
+	 */
 	public void bindShaderProgram(UShaderProgram program) {
 		shaderProgramName = program == null ? null : program.getName();
 	}
 
+	/**
+	 * Gets the number of texture mappers bound to this material.
+	 *
+	 * @return
+	 */
 	public int getTextureMapperCount() {
 		return textureMappers.size();
 	}
 
+	/**
+	 * Gets a texture mapper.
+	 *
+	 * @param index Index of the texture mapper.
+	 * @return
+	 */
 	public UTextureMapper getTextureMapper(int index) {
 		return textureMappers.get(index);
 	}
 
+	/**
+	 * Gets the reference to this material's texture mapper list. Any changes made to it will be reflected in
+	 * the material, so use with caution.
+	 *
+	 * @return
+	 */
 	public List<UTextureMapper> getTextureMappers() {
 		return textureMappers;
 	}
 
+	/**
+	 * Configures the shader program according to the material's shader parameters and texture mappers.
+	 *
+	 * @param shader The shader program to target.
+	 * @param rnd Rendering backend core.
+	 * @param textures List to search for required texture resources.
+	 */
 	public void configureShader(UShaderProgram shader, RenderingBackend rnd, List<UTexture> textures) {
 		shaderParams.setup(shader, rnd);
 
@@ -68,20 +110,9 @@ public class UMaterial extends UGfxEngineObject {
 					rnd.texUnitInit(texUnit, texUnitIdx);
 
 					if (tex != null) {
-						//Use texture
 						rnd.texUnitSetTexture(texUnit, tex.getTextureType(), tex.__handle);
 						rnd.texSetParams(tex.__handle, tex.getTextureType(), mapper.wrapU, mapper.wrapV, mapper.magFilter, mapper.minFilter);
-					} /*else if (rt != null) {
-						//Use RenderTexture
-						if (rt.__textureHandle.isInitialized(rnd)) {
-							//System.out.println("Binding RenderTexture " + rt.name + " to material " + name + " mapper " + mapper.shaderVariableName);
-							rnd.texUnitSetTexture(texUnit, UTextureType.TEX2D, rt.__textureHandle);
-							rnd.texSetParams(rt.__textureHandle, UTextureType.TEX2D, mapper.wrapU, mapper.wrapV, mapper.magFilter, mapper.minFilter);
-						}
-						else {
-							System.err.println("RenderTarget RenderTexture not initialized! RT: " + rt.name);
-						}
-					}*/
+					}
 
 					rnd.uniformSampler(loc, texUnit);
 					texUnitIdx++;

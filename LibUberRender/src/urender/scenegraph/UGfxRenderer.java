@@ -5,54 +5,57 @@ import java.util.List;
 import urender.api.UBlendEquation;
 import urender.api.UBlendFunction;
 import urender.api.backend.RenderingBackend;
+import urender.engine.UShadingMethod;
 import urender.engine.UFramebuffer;
-import urender.engine.UMaterialDrawLayer;
 import urender.engine.URenderTarget;
 import urender.engine.UTexture;
 import urender.engine.shader.UUniformList;
 
-public class UGfxRenderer {
+/**
+ * URender SceneGraph rendering engine base class.
+ */
+public abstract class UGfxRenderer {
 
-	private final RenderingBackend backend;
+	protected final RenderingBackend backend;
 
-	private ULightAdapter lightAdapter;
-
-	private UFramebuffer gbufferFramebuffer;
-	private UFramebuffer forwardFramebuffer;
-
-	private UMaterialDrawLayer.ShadingMethod nowShadingMethod = null;
+	private UShadingMethod nowShadingMethod = null;
 
 	private UDrawState drawState = new UDrawState();
 
-	public UGfxRenderer(RenderingBackend backend, UFramebuffer gbufferFramebuffer, UFramebuffer forwardFramebuffer) {
+	public UGfxRenderer(RenderingBackend backend) {
 		this.backend = backend;
-		this.gbufferFramebuffer = gbufferFramebuffer;
-		this.forwardFramebuffer = forwardFramebuffer;
 	}
+	
+	protected abstract UFramebuffer getGBufferFB();
+	protected abstract UFramebuffer getForwardFB();
+	
+	protected abstract ULightAdapter getLightAdapter();
+	protected abstract UUniformList getSystemUniforms();
+	
+	public abstract void drawScene(UScene scene);
+	public abstract void blitScreen();
 
-	public void beginScene(UScene scene) {
+	protected void beginScene(UScene scene) {
+		ULightAdapter lightAdapter = getLightAdapter();
 		if (lightAdapter != null) {
 			lightAdapter.setLights(scene.lights);
 		}
 		drawState = new UDrawState();
-		drawState.sceneUniformTemp.addAll(scene.getSceneUniforms());
+		drawState.commonUniforms.addAll(getSystemUniforms());
+		drawState.commonUniforms.addAll(scene.getSceneUniforms());
 		if (lightAdapter != null) {
-			drawState.sceneUniformTemp.addAll(lightAdapter.getLightUniforms());
+			drawState.commonUniforms.addAll(lightAdapter.getLightUniforms());
 		}
-	}
-
-	public void bindLightAdapter(ULightAdapter lightAdapter) {
-		this.lightAdapter = lightAdapter;
 	}
 
 	public List<UTexture> getRenderTextures() {
 		List<UTexture> l = new ArrayList<>();
-		l.addAll(gbufferFramebuffer.getRenderTargets());
-		l.addAll(forwardFramebuffer.getRenderTargets());
+		l.addAll(getGBufferFB().getRenderTargets());
+		l.addAll(getForwardFB().getRenderTargets());
 		return l;
 	}
 
-	public boolean isShadingMethodCurrent(UMaterialDrawLayer.ShadingMethod method) {
+	public boolean isShadingMethodCurrent(UShadingMethod method) {
 		return nowShadingMethod == null || method == nowShadingMethod;
 	}
 
@@ -68,15 +71,15 @@ public class UGfxRenderer {
 		backend.renderStateBlendSet(true, UBlendEquation.ADD, UBlendFunction.ONE, UBlendFunction.ZERO);
 	}
 
-	public void changeShadingMethod(UMaterialDrawLayer.ShadingMethod method) {
+	public void changeShadingMethod(UShadingMethod method) {
 		if (method != nowShadingMethod) {
 			if (method != null) {
 				switch (method) {
 					case DEFERRED:
-						gbufferFramebuffer.setup(backend);
+						getGBufferFB().setup(backend);
 						break;
 					case FORWARD:
-						forwardFramebuffer.setup(backend);
+						getForwardFB().setup(backend);
 						break;
 				}
 			} else {
@@ -87,8 +90,8 @@ public class UGfxRenderer {
 	}
 
 	public void setAllFramebufferResolution(int width, int height) {
-		gbufferFramebuffer.setAllRenderTargetResolution(width, height);
-		forwardFramebuffer.setAllRenderTargetResolution(width, height);
+		getGBufferFB().setAllRenderTargetResolution(width, height);
+		getForwardFB().setAllRenderTargetResolution(width, height);
 	}
 
 	public void setScreenFramebuffer() {
@@ -96,9 +99,9 @@ public class UGfxRenderer {
 	}
 
 	public URenderTarget findRenderTarget(String name) {
-		URenderTarget rt = gbufferFramebuffer.findRenderTarget(name);
+		URenderTarget rt = getGBufferFB().findRenderTarget(name);
 		if (rt == null) {
-			rt = forwardFramebuffer.findRenderTarget(name);
+			rt = getForwardFB().findRenderTarget(name);
 		}
 		return rt;
 	}

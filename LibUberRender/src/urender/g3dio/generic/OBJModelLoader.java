@@ -33,6 +33,9 @@ import urender.engine.UVertexAttributeBuilder;
 import urender.scenegraph.UModel;
 import urender.scenegraph.USceneNode;
 
+/**
+ * Resource loader for Wavefront OBJ model data.
+ */
 public class OBJModelLoader {
 
 	private static final String OBJ_DEFAULT_SHADER_NAME = "OBJDefaultShader";
@@ -319,7 +322,7 @@ public class OBJModelLoader {
 
 			boolean hasNormal = false;
 			boolean[] hasTexcoord = new boolean[2];
-			
+
 			System.out.println("Converting " + faces.size() + " faces...");
 
 			for (OBJFacepoint vp : faces) {
@@ -396,7 +399,6 @@ public class OBJModelLoader {
 					.setElementCount(3)
 					.setFormat(UDataType.FLOAT32)
 					.setNormalized(false)
-					.setTypeUnsigned(false)
 					.build();
 			mesh.addVertexAttribute(pos);
 
@@ -412,7 +414,6 @@ public class OBJModelLoader {
 						.setElementCount(3)
 						.setFormat(UDataType.FLOAT32)
 						.setNormalized(false)
-						.setTypeUnsigned(false)
 						.build();
 				mesh.addVertexAttribute(nor);
 				size += nor.getSize();
@@ -427,7 +428,6 @@ public class OBJModelLoader {
 						.setElementCount(3)
 						.setFormat(UDataType.FLOAT32)
 						.setNormalized(false)
-						.setTypeUnsigned(false)
 						.build();
 				mesh.addVertexAttribute(tgt);
 				size += tgt.getSize();
@@ -443,7 +443,6 @@ public class OBJModelLoader {
 							.setElementCount(2)
 							.setFormat(UDataType.FLOAT32)
 							.setNormalized(false)
-							.setTypeUnsigned(false)
 							.build();
 					mesh.addVertexAttribute(uv);
 					size += uv.getSize();
@@ -461,7 +460,7 @@ public class OBJModelLoader {
 			Vector3f tangent = new Vector3f();
 
 			HashSet<OBJVertex> convVerts = new HashSet<>();
-			
+
 			System.out.println("About to convert " + verticesUnindexed.size() + " vertices.");
 
 			for (int ti = 0; ti < verticesUnindexed.size(); ti += 3) {
@@ -516,7 +515,7 @@ public class OBJModelLoader {
 								vertexBuffer.putFloat(v.texcoords[i].y);
 							}
 						}
-						
+
 						convVerts.add(v);
 					}
 				}

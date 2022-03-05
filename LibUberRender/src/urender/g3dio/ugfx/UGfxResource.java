@@ -20,13 +20,33 @@ import urender.g3dio.ugfx.serializers.IGfxResourceSerializer;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 import urender.g3dio.ugfx.adapters.IGfxResourceProvider;
 
+/**
+ * URender Graphics Resource file format.
+ *
+ * Data is read and written using unaligned binary stream blocks.
+ */
 public class UGfxResource {
 
+	/**
+	 * Magic string for identifying the format's binary files.
+	 */
 	public static final String UGFX_SIGNATURE = "UGfxRsrc";
+	/**
+	 * Size of a four character resource block tag (4).
+	 */
 	public static final int UGFX_COMMON_TAGSTR_SIZE = 4;
-
+	/**
+	 * Terminator resource block tag.
+	 */
 	private static final String UGFX_STREAM_END_TAG = "TERM";
 
+	/**
+	 * Loads a resource from the program's classpath.
+	 *
+	 * @param path Classpath of the resource.
+	 * @param loader The loader to use for the binary stream.
+	 * @param consumer The consumer to load resources into.
+	 */
 	public static void loadResourceClasspath(String path, IGfxResourceLoader loader, IGfxResourceConsumer consumer) {
 		try (ReadableStream in = new InputStreamReadable(UGfxResource.class.getClassLoader().getResourceAsStream(path))) {
 			loadResource(in, loader, consumer);
@@ -34,7 +54,14 @@ public class UGfxResource {
 			Logger.getLogger(UGfxResource.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
-	
+
+	/**
+	 * Loads a resource from a disk file.
+	 *
+	 * @param f Location of the resource in the file system.
+	 * @param loader The loader to use for the binary stream.
+	 * @param consumer The consumer to load resources into.
+	 */
 	public static void loadResourceFile(File f, IGfxResourceLoader loader, IGfxResourceConsumer consumer) {
 		try (ReadableStream in = FileStream.create(f)) {
 			loadResource(in, loader, consumer);
@@ -44,7 +71,14 @@ public class UGfxResource {
 			throw new RuntimeException("Failed to read UGfxResource " + f.getAbsolutePath(), ex);
 		}
 	}
-	
+
+	/**
+	 * Writes a resource to a disk file.
+	 *
+	 * @param f Location of the new resource in the file system.
+	 * @param loader The loader to use for the binary stream.
+	 * @param provider Provider to obtain resources from.
+	 */
 	public static void writeResourceFile(File f, IGfxResourceLoader loader, IGfxResourceProvider provider) {
 		try (FileStream out = FileStream.create(f)) {
 			out.setLength(0);
@@ -54,13 +88,21 @@ public class UGfxResource {
 		}
 	}
 
+	/**
+	 * Reads a resource stream.
+	 *
+	 * @param stream Stream of valid resource data.
+	 * @param loader The loader to use for the binary stream.
+	 * @param consumer The consumer to load resources into.
+	 * @throws IOException
+	 */
 	public static void loadResource(ReadableStream stream, IGfxResourceLoader loader, IGfxResourceConsumer consumer) throws IOException {
 		UGfxDataInput in = new UGfxDataInput(stream, loader);
 
 		GfxBinaryHeader header = new GfxBinaryHeader(in);
 
 		header.verify();
-		
+
 		in.setVersion(header.revision);
 
 		String tag;
@@ -83,6 +125,14 @@ public class UGfxResource {
 		}
 	}
 
+	/**
+	 * Writes a resource stream.
+	 *
+	 * @param stream Stream to write the data into.
+	 * @param loader The loader to use for the binary stream.
+	 * @param provider Provider to obtain resources from.
+	 * @throws IOException
+	 */
 	public static void writeResource(WriteableStream stream, IGfxResourceLoader loader, IGfxResourceProvider provider) throws IOException {
 		UGfxDataOutput out = new UGfxDataOutput(stream, loader);
 

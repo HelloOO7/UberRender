@@ -45,7 +45,7 @@ public class TurboLightManager implements ULightAdapter {
 			SPOT_LIGHTS[i] = new TurboSpotLight(i);
 		}
 	}
-	
+
 	private int getLightCount(int lightType) {
 		return lightCounts.get(lightType);
 	}
@@ -76,7 +76,7 @@ public class TurboLightManager implements ULightAdapter {
 
 			int nowCount = getLightCount(turboLightType);
 			int maxCount = LIGHT_MAX[turboLightType];
-			
+
 			if (nowCount < maxCount) {
 				switch (l.getLightType()) {
 					case DIRECTIONAL:
@@ -89,7 +89,7 @@ public class TurboLightManager implements ULightAdapter {
 						SPOT_LIGHTS[nowCount].assign((USpotLight) l);
 						break;
 				}
-				
+
 				setLightCount(turboLightType, nowCount + 1);
 			}
 		}

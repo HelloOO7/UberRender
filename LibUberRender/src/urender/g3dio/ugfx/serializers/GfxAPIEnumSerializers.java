@@ -104,7 +104,10 @@ public class GfxAPIEnumSerializers extends AbstractGfxEnumSerializerProvider {
 			UDataType.FLOAT16,
 			UDataType.INT8,
 			UDataType.INT16,
-			UDataType.INT32
+			UDataType.INT32,
+			UDataType.UINT8,
+			UDataType.UINT16,
+			UDataType.UINT32
 		};
 
 		@Override

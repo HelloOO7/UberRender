@@ -19,7 +19,7 @@ import urender.api.UTextureType;
 import urender.api.UTextureWrap;
 
 public interface APITranslator {
-	public int getDataType(UDataType type, boolean unsigned);
+	public int getDataType(UDataType type);
 	public int getPrimitiveType(UPrimitiveType type);
 	public int getTextureType(UTextureType t);
 	public int getTextureFaceAssignment(UTextureFaceAssignment asgn);

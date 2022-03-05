@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import urender.api.UTextureFormat;
@@ -17,6 +16,9 @@ import urender.common.io.util.StringIO;
 import urender.engine.UTexture;
 import urender.engine.UTexture2DBuilder;
 
+/**
+ * DirectDraw Surface texture resource loader.
+ */
 public class DDSTextureLoader {
 
 	private static final String DDS_MAGIC = "DDS ";

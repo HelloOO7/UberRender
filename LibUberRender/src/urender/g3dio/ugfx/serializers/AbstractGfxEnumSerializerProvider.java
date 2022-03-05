@@ -5,8 +5,16 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * Implementation of IGfxEnumSerializerProvider using hash maps.
+ */
 public abstract class AbstractGfxEnumSerializerProvider implements IGfxEnumSerializerProvider {
 
+	/**
+	 * Gets the hash map containing the serializer in this set.
+	 *
+	 * @return
+	 */
 	protected abstract Map<Class<? extends Enum>, IGfxEnumSerializer> serializerMap();
 
 	@Override

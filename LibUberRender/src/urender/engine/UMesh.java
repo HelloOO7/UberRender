@@ -24,13 +24,21 @@ public class UMesh extends UGfxEngineObject {
 	ByteBuffer vertexBuffer;
 
 	final List<UVertexAttribute> vertexAttributes = new ArrayList<>();
-	
-	private final UBoundingBox aabb = new UBoundingBox();
 
+	/**
+	 * Get the primitive mode used for rendering this mesh.
+	 *
+	 * @return
+	 */
 	public UPrimitiveType getPrimitiveType() {
 		return primitiveType;
 	}
 
+	/**
+	 * Calculates the vertex stride.
+	 *
+	 * @return
+	 */
 	public int getOneVertexSize() {
 		int size = 0;
 		for (UVertexAttribute a : vertexAttributes) {
@@ -39,46 +47,70 @@ public class UMesh extends UGfxEngineObject {
 		return size;
 	}
 
+	/**
+	 * Gets the number of vertex attributes.
+	 *
+	 * @return
+	 */
 	public int getVtxAttrCount() {
 		return vertexAttributes.size();
 	}
 
+	/**
+	 * Gets a vertex attribute.
+	 *
+	 * @param index Index of the vertex attribute.
+	 * @return
+	 */
 	public UVertexAttribute getVtxAttr(int index) {
 		return vertexAttributes.get(index);
 	}
 
+	/**
+	 * Gets the raw data format of the index buffer.
+	 *
+	 * @return
+	 */
 	public UDataType getIBOFormat() {
 		return indexBufferFormat;
 	}
 
+	/**
+	 * Gets the index buffer data.
+	 *
+	 * @return
+	 */
 	public ByteBuffer getIBO() {
 		return indexBuffer;
 	}
 
+	/**
+	 * Gets the vertex buffer data.
+	 *
+	 * @return
+	 */
 	public ByteBuffer getVBO() {
 		return vertexBuffer;
 	}
 
+	/**
+	 * Gets the number of vertices in the vertex buffer.
+	 *
+	 * @return
+	 */
 	public int getVertexCount() {
 		return vertexBuffer.capacity() / getOneVertexSize();
 	}
 
+	/**
+	 * Gets the number if facepoints in the index buffer.
+	 *
+	 * @return
+	 */
 	public int getIndexCount() {
 		return indexBuffer.capacity() / indexBufferFormat.sizeof;
 	}
 
-	public void getAABBCenter(Vector3f dest) {
-		aabb.getCenter(dest);
-	}
-	
-	public void getAABBMin(Vector3f dest) {
-		dest.set(aabb.min);
-	}
-	
-	public void getAABBMax(Vector3f dest) {
-		dest.set(aabb.max);
-	}
-	
 	private static void setupBuffer(RenderingBackend core, UBufferType type, UObjHandle handle, ByteBuffer buf) {
 		if (!handle.isInitialized(core)) {
 			core.bufferInit(handle);
@@ -88,18 +120,29 @@ public class UMesh extends UGfxEngineObject {
 		}
 	}
 
+	/**
+	 * Readies the mesh's buffers for drawing.
+	 *
+	 * @param rnd Rendering backend core.
+	 */
 	public void setup(RenderingBackend rnd) {
 		setupBuffer(rnd, UBufferType.IBO, __iboHandle, indexBuffer);
 		setupBuffer(rnd, UBufferType.VBO, __vboHandle, vertexBuffer);
 	}
 
+	/**
+	 * Draws the mesh using a shader program.
+	 *
+	 * @param rnd Rendering backend core.
+	 * @param program The shader program to use.
+	 */
 	public void draw(RenderingBackend rnd, UShaderProgram program) {
 		int stride = getOneVertexSize();
 
 		for (UVertexAttribute a : vertexAttributes) {
 			UObjHandle index = program.getAttributeLocation(rnd, a.shaderAttrName);
 			if (index.isValid(rnd)) {
-				rnd.bufferAttribPointer(__vboHandle, index, a.elementCount, a.format, a.unsigned, a.normalized, stride, a.offset);
+				rnd.bufferAttribPointer(__vboHandle, index, a.elementCount, a.format, a.normalized, stride, a.offset);
 			}
 		}
 

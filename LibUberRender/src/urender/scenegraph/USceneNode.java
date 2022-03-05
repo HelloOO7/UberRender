@@ -10,20 +10,55 @@ import urender.engine.shader.UShaderProgram;
 import urender.engine.UTexture;
 import urender.engine.shader.UUniformList;
 
+/**
+ * Scenegraph node.
+ */
 public class USceneNode {
+
+	/**
+	 * Transform of the scene node relative to the parent.
+	 */
 	public UNodeTransform transform = new UDefaultNodeTransform();
+	/**
+	 * Relation to a parent scenegraph node.
+	 */
 	public UParentRelation parentRelation = new UDefaultParentRelation();
-	
+	/**
+	 * List of shader parameters global to this node and all its children.
+	 */
 	public final UUniformList uniforms = new UUniformList();
-	
+
+	/**
+	 * Local model resources.
+	 */
 	public final List<UModel> models = new ArrayList<>();
+	/**
+	 * Local shader programs.
+	 */
 	public final List<UShaderProgram> programs = new ArrayList<>();
-	
+
+	/**
+	 * Local texture resources.
+	 */
 	public final List<UTexture> textures = new ArrayList<>();
+	/**
+	 * Local mesh resources.
+	 */
 	public final List<UMesh> meshes = new ArrayList<>();
+	/**
+	 * Local material resources.
+	 */
 	public final List<UMaterial> materials = new ArrayList<>();
+	/**
+	 * Local shader resources.
+	 */
 	public final List<UShader> shaders = new ArrayList<>();
-	
+
+	/**
+	 * Renders this node with a dummy render queue.
+	 *
+	 * @param rnd Rendering engine.
+	 */
 	public void drawHeadless(UGfxRenderer rnd) {
 		URenderQueue.URenderQueueNodeState nodeState = new URenderQueue.URenderQueueNodeState(this);
 		nodeState.drawSources.setup(rnd);
@@ -39,7 +74,12 @@ public class USceneNode {
 			ms.draw(rnd);
 		}
 	}
-	
+
+	/**
+	 * Creates a draw source array from this node's local resources.
+	 *
+	 * @return
+	 */
 	public UDrawSources getDrawSources() {
 		return new UDrawSources(meshes, materials, shaders, programs, uniforms, textures);
 	}

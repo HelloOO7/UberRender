@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import urender.engine.UGfxEngineObject;
-import urender.engine.UGfxObject;
 import urender.engine.UMaterial;
 import urender.engine.UMesh;
 import urender.engine.UTexture;
@@ -16,6 +15,9 @@ import urender.scenegraph.UGfxScenegraphObject;
 import urender.scenegraph.UModel;
 import urender.scenegraph.USceneNode;
 
+/**
+ * Adapter for de/serializing URender SceneGraph nodes from/to UGfxResource format.
+ */
 public class USceneNodeGfxResourceAdapter implements IGfxResourceConsumer, IGfxResourceProvider {
 
 	private final USceneNode node;
@@ -23,6 +25,11 @@ public class USceneNodeGfxResourceAdapter implements IGfxResourceConsumer, IGfxR
 	private List<Object> outputList = null;
 	private Iterator<Object> outputListIter = null;
 
+	/**
+	 * Wraps a USceneNodeGfxResourceAdapter around a scene node.
+	 *
+	 * @param node The node to target.
+	 */
 	public USceneNodeGfxResourceAdapter(USceneNode node) {
 		this.node = node;
 	}
@@ -64,11 +71,11 @@ public class USceneNodeGfxResourceAdapter implements IGfxResourceConsumer, IGfxR
 			}
 		} else if (obj instanceof UGfxScenegraphObject) {
 			UGfxScenegraphObject sgObj = (UGfxScenegraphObject) obj;
-			
+
 			switch (sgObj.getType()) {
 				case MODEL:
 					node.models.add((UModel) sgObj);
-					break;					
+					break;
 			}
 		}
 	}

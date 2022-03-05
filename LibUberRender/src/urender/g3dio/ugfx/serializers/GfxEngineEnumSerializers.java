@@ -2,6 +2,7 @@ package urender.g3dio.ugfx.serializers;
 
 import java.util.HashMap;
 import java.util.Map;
+import urender.engine.UShadingMethod;
 import urender.engine.UMaterialDrawLayer;
 import urender.engine.shader.UUniformType;
 
@@ -35,15 +36,15 @@ public class GfxEngineEnumSerializers extends AbstractGfxEnumSerializerProvider 
 		}
 	};
 
-	public static final AbstractGfxEnumSerializer<UMaterialDrawLayer.ShadingMethod> SHADING_METHOD = new AbstractGfxEnumSerializer<UMaterialDrawLayer.ShadingMethod>() {
+	public static final AbstractGfxEnumSerializer<UShadingMethod> SHADING_METHOD = new AbstractGfxEnumSerializer<UShadingMethod>() {
 
-		private final UMaterialDrawLayer.ShadingMethod[] SHADING_METHOD_LOOKUP = new UMaterialDrawLayer.ShadingMethod[]{
-			UMaterialDrawLayer.ShadingMethod.FORWARD,
-			UMaterialDrawLayer.ShadingMethod.DEFERRED
+		private final UShadingMethod[] SHADING_METHOD_LOOKUP = new UShadingMethod[]{
+			UShadingMethod.FORWARD,
+			UShadingMethod.DEFERRED
 		};
 
 		@Override
-		protected UMaterialDrawLayer.ShadingMethod[] lut() {
+		protected UShadingMethod[] lut() {
 			return SHADING_METHOD_LOOKUP;
 		}
 	};
@@ -51,7 +52,7 @@ public class GfxEngineEnumSerializers extends AbstractGfxEnumSerializerProvider 
 
 	static {
 		SERIALIZER_MAP.put(UUniformType.class, UNIFORM_TYPE);
-		SERIALIZER_MAP.put(UMaterialDrawLayer.ShadingMethod.class, SHADING_METHOD);
+		SERIALIZER_MAP.put(UShadingMethod.class, SHADING_METHOD);
 	}
 
 	@Override

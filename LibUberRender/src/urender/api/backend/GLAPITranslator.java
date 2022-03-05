@@ -22,7 +22,7 @@ import urender.api.UTextureWrap;
 public class GLAPITranslator implements APITranslator {
 
 	@Override
-	public int getDataType(UDataType type, boolean unsigned) {
+	public int getDataType(UDataType type) {
 		switch (type) {
 			case FLOAT16:
 				return GL4.GL_HALF_FLOAT;
@@ -31,11 +31,17 @@ public class GLAPITranslator implements APITranslator {
 			case FLOAT64:
 				return GL4.GL_DOUBLE;
 			case INT16:
-				return unsigned ? GL4.GL_UNSIGNED_SHORT : GL4.GL_SHORT;
+				return GL4.GL_SHORT;
 			case INT32:
-				return unsigned ? GL4.GL_UNSIGNED_INT : GL4.GL_INT;
+				return GL4.GL_INT;
 			case INT8:
-				return unsigned ? GL4.GL_UNSIGNED_BYTE : GL4.GL_BYTE;
+				return GL4.GL_BYTE;
+			case UINT16:
+				return GL4.GL_UNSIGNED_SHORT;
+			case UINT32:
+				return GL4.GL_UNSIGNED_INT;
+			case UINT8:
+				return GL4.GL_UNSIGNED_BYTE;
 		}
 		return GL4.GL_INVALID_ENUM;
 	}

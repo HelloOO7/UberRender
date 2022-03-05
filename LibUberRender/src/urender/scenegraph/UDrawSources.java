@@ -9,6 +9,9 @@ import urender.engine.shader.UShader;
 import urender.engine.shader.UShaderProgram;
 import urender.engine.shader.UUniformList;
 
+/**
+ * List of graphics resources available to a context. For internal usage.
+ */
 public class UDrawSources {
 
 	public final List<UMesh> meshList;
@@ -32,6 +35,9 @@ public class UDrawSources {
 		this.textureList = textureList;
 	}
 
+	/**
+	 * Readies all underlying resources for rendering.
+	 */
 	public void setup(UGfxRenderer rnd) {
 		RenderingBackend core = rnd.getCore();
 		for (UMesh m : meshList) {

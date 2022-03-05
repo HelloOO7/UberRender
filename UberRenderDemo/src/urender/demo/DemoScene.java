@@ -3,20 +3,13 @@ package urender.demo;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import urender.engine.shader.UUniform;
 import urender.engine.shader.UUniformFloat;
-import urender.engine.shader.UUniformInt;
-import urender.engine.shader.UUniformMatrix3;
-import urender.engine.shader.UUniformMatrix4;
-import urender.engine.shader.UUniformVector3;
 import urender.g3dio.ugfx.UGfxResource;
 import urender.scenegraph.UCameraLookAtOrbit;
 import urender.scenegraph.UDirectionalLight;
 import urender.scenegraph.UPointLight;
-import urender.scenegraph.URenderQueue;
 import urender.scenegraph.UScene;
 import urender.scenegraph.USceneNode;
 import urender.scenegraph.USpotLight;
@@ -29,28 +22,12 @@ public class DemoScene extends UScene {
 
 	public final UCameraLookAtOrbit orbitCamera = new UCameraLookAtOrbit();
 
-	private final Matrix4f modelMtx = new Matrix4f();
-	private final Matrix4f viewMtx = new Matrix4f();
-	private final Matrix4f projMtx = new Matrix4f();
-	private final Matrix3f normMtx = new Matrix3f();
-
-	private final UUniformMatrix4 worldMtxU = new UUniformMatrix4("UBR_ModelMatrix", modelMtx);
-	private final UUniformMatrix4 viewMtxU = new UUniformMatrix4("UBR_ViewMatrix", viewMtx);
-	private final UUniformMatrix4 projMtxU = new UUniformMatrix4("UBR_ProjectionMatrix", projMtx);
-	private final UUniformMatrix3 normMtxU = new UUniformMatrix3("UBR_NormalMatrix", normMtx);
-
 	private final UUniformFloat time = new UUniformFloat("time", 0f);
-
-	private final Vector3f eye = new Vector3f();
-	private final UUniformVector3 eyeU = new UUniformVector3("Eye", eye);
-	private final Vector3f lightDir = new Vector3f(0f, -1f, 1f);
-	private final UUniformVector3 lightDirU = new UUniformVector3("LightDir", lightDir);
 
 	USceneNode star;
 
 	public DemoScene() {
 		addGlobalUniform(time);
-		addGlobalUniform(lightDirU);
 
 		camera = orbitCamera;
 
@@ -67,7 +44,7 @@ public class DemoScene extends UScene {
 	private void createLights() {
 		UDirectionalLight moon = new UDirectionalLight();
 		moon.setName("lt_dir_Moon");
-		moon.direction = lightDir;
+		moon.direction = new Vector3f(0f, -1f, 1f);
 		moon.colors.ambient.set(.6f, .6f, .6f);
 		moon.colors.diffuse.set(1f, 1f, 1f);
 		lights.add(moon);
@@ -141,13 +118,7 @@ public class DemoScene extends UScene {
 
 	@Override
 	public List<UUniform> getSceneUniforms() {
-		List<UUniform> l = new ArrayList<>();
-		l.add(eyeU);
-		l.add(worldMtxU);
-		l.add(viewMtxU);
-		l.add(projMtxU);
-		l.add(normMtxU);
-		return l;
+		return new ArrayList<>();
 	}
 
 	public void setTimeCounter(float time) {
@@ -155,18 +126,6 @@ public class DemoScene extends UScene {
 		if (star != null) {
 			star.transform.getRotation().y = (time % 10000f) / 10000f * 6.28f;
 		}
-	}
-
-	public void setGlobalMatrices(URenderQueue.URenderQueueMeshState state) {
-		projMtx.set(state.nodeState.projectionMatrix);
-		viewMtx.set(state.nodeState.viewMatrix);
-		modelMtx.set(state.nodeState.modelMatrix);
-		state.nodeState.modelMatrix.normalize3x3(normMtx);
-		normMtx.normal();
-
-		Matrix4f camMtx = new Matrix4f();
-		orbitCamera.mulViewMatrix(camMtx);
-		camMtx.getTranslation(eye);
 	}
 
 	private static void loadResource(USceneNode dest, String fileName) {

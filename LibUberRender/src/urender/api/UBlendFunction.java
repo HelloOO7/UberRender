@@ -1,5 +1,10 @@
 package urender.api;
 
+/**
+ * Framebuffer X fragment blend function/factor.
+ * 
+ * Refer to the OpenGL/Direct3D specification for the exact formulas.
+ */
 public enum UBlendFunction {
 	ZERO,
 	ONE,

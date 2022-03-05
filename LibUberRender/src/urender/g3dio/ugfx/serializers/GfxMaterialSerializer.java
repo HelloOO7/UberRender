@@ -5,6 +5,7 @@ import urender.api.UTextureMagFilter;
 import urender.api.UTextureMinFilter;
 import urender.api.UTextureWrap;
 import urender.common.io.base.iface.DataOutputEx;
+import urender.engine.UShadingMethod;
 import urender.engine.UMaterial;
 import urender.engine.UMaterialBuilder;
 import urender.engine.UMaterialDrawLayer;
@@ -29,7 +30,7 @@ public class GfxMaterialSerializer implements IGfxResourceSerializer<UMaterial> 
 		bld.setName(in.readString());
 		bld.setShaderProgramName(in.readString());
 		if (in.versionOver(UGfxFormatRevisions.MATERIAL_DRAW_LAYERS)) {
-			bld.setDrawLayer(new UMaterialDrawLayer(in.readEnum(UMaterialDrawLayer.ShadingMethod.class), in.readUnsignedShort()));
+			bld.setDrawLayer(new UMaterialDrawLayer(in.readEnum(UShadingMethod.class), in.readUnsignedShort()));
 		}
 
 		int mapperCount = in.read();

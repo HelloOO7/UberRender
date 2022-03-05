@@ -12,6 +12,15 @@ public class UTexture2DCube extends UTexture {
 
 	public List<UTextureCubeFace> faces = new ArrayList<>();
 
+	/**
+	 * Creates a cubemap texture resource.
+	 *
+	 * @param name Local name of the resource.
+	 * @param width Width of the texture image.
+	 * @param height Height of the texture image.
+	 * @param format Pixel format of the data.
+	 * @param faces List of texture face data.
+	 */
 	public UTexture2DCube(String name, int width, int height, UTextureFormat format, List<UTextureCubeFace> faces) {
 		super(name, width, height, format);
 		this.faces.addAll(faces);
@@ -28,7 +37,7 @@ public class UTexture2DCube extends UTexture {
 				rnd.texUploadData2D(__handle, width, height, format, face.assignment, face.data);
 			}
 		}
-		
+
 		swizzleMask.setup(rnd, this);
 	}
 
@@ -41,7 +50,7 @@ public class UTexture2DCube extends UTexture {
 
 		public UTextureFaceAssignment assignment;
 		public Buffer data;
-		
+
 		public UTextureCubeFace(UTextureFaceAssignment assignment, Buffer data) {
 			this.assignment = assignment;
 			this.data = data;

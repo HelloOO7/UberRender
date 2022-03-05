@@ -17,6 +17,9 @@ import urender.engine.UTexture;
 import urender.engine.UTexture2D;
 import urender.engine.UTextureSwizzleMask;
 
+/**
+ * Java ImageIO-based texture resource loader.
+ */
 public class IIOTextureLoader {
 
 	public static UTexture createIIOTexture(File file) {
