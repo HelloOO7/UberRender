@@ -1,0 +1,1 @@
+This folder contains various diagrams, charts and schemas documenting some of the library and demo's functionalities.
