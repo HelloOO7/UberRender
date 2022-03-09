@@ -1,11 +1,8 @@
 package urender.g3dio.ugfx.serializers;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import urender.api.UDataType;
 import urender.api.UPrimitiveType;
-import urender.common.io.base.iface.DataInputEx;
-import urender.common.io.base.iface.DataOutputEx;
 import urender.engine.UMesh;
 import urender.engine.UMeshBuilder;
 import urender.engine.UVertexAttribute;
@@ -20,27 +17,6 @@ public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
 	@Override
 	public String getTagIdent() {
 		return "MESH";
-	}
-
-	private ByteBuffer readRawBuffer(DataInputEx in) throws IOException {
-		int size = in.readInt();
-		byte[] array = in.readBytes(size);
-		ByteBuffer b = ByteBuffer.allocateDirect(size); //We will read into an array and then transfer to a direct byte buffer, which is long-term faster
-		b.put(ByteBuffer.wrap(array)); //DirectByteBuffer will transfer faster.
-		return b;
-	}
-
-	private void writeRawBuffer(ByteBuffer b, DataOutputEx out) throws IOException {
-		byte[] bytes;
-		if (b.hasArray()) {
-			bytes = b.array();
-		} else {
-			bytes = new byte[b.capacity()];
-			b.rewind();
-			b.get(bytes);
-		}
-		out.writeInt(bytes.length);
-		out.write(bytes);
 	}
 
 	@Override
@@ -80,7 +56,7 @@ public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
 			bld.addVertexAttribute(attrBld.build());
 		}
 
-		bld.setIBO(iboFormat, readRawBuffer(in)).setVBO(readRawBuffer(in));
+		bld.setIBO(iboFormat, in.readRawBufferDirect()).setVBO(in.readRawBufferDirect());
 
 		consumer.loadObject(bld.build());
 	}
@@ -119,8 +95,8 @@ public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
 			out.writeBoolean(a.isNormalized());
 		}
 
-		writeRawBuffer(mesh.getIBO(), out);
-		writeRawBuffer(mesh.getVBO(), out);
+		out.writeRawBuffer(mesh.getIBO());
+		out.writeRawBuffer(mesh.getVBO());
 	}
 
 	@Override

@@ -37,6 +37,7 @@ public class UDrawSources {
 
 	/**
 	 * Readies all underlying resources for rendering.
+	 * @param rnd
 	 */
 	public void setup(UGfxRenderer rnd) {
 		RenderingBackend core = rnd.getCore();

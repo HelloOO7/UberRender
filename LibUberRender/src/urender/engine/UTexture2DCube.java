@@ -1,6 +1,7 @@
 package urender.engine;
 
 import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import urender.api.UTextureFaceAssignment;
@@ -49,9 +50,9 @@ public class UTexture2DCube extends UTexture {
 	public static class UTextureCubeFace {
 
 		public UTextureFaceAssignment assignment;
-		public Buffer data;
+		public ByteBuffer data;
 
-		public UTextureCubeFace(UTextureFaceAssignment assignment, Buffer data) {
+		public UTextureCubeFace(UTextureFaceAssignment assignment, ByteBuffer data) {
 			this.assignment = assignment;
 			this.data = data;
 		}

@@ -2,6 +2,7 @@ package urender.g3dio.ugfx.serializers;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import urender.api.UTextureFaceAssignment;
 import urender.api.UTextureFormat;
 import urender.api.UTextureSwizzleChannel;
 import urender.api.UTextureType;
@@ -10,6 +11,8 @@ import urender.common.io.base.iface.DataOutputEx;
 import urender.engine.UTexture;
 import urender.engine.UTexture2D;
 import urender.engine.UTexture2DBuilder;
+import urender.engine.UTexture2DCube;
+import urender.engine.UTexture2DCubeBuilder;
 import urender.engine.UTextureBuilder;
 import urender.engine.UTextureSwizzleMask;
 import urender.g3dio.ugfx.UGfxDataInput;
@@ -20,7 +23,8 @@ import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 
 	private static final ITextureSerializer[] TEX_SERIALIZERS = new ITextureSerializer[]{
-		new Texture2DSerializer()
+		new Texture2DSerializer(),
+		new Texture2DCubeSerializer()
 	};
 
 	@Override
@@ -86,18 +90,18 @@ public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 
 		public UTextureType getTexType();
 
-		public UTextureBuilder readTexture(DataInputEx input) throws IOException;
+		public UTextureBuilder readTexture(UGfxDataInput input) throws IOException;
 
-		public void writeTexture(UTexture tex, DataOutputEx output) throws IOException;
+		public void writeTexture(UTexture tex, UGfxDataOutput output) throws IOException;
 	}
 
 	private static class Texture2DSerializer implements ITextureSerializer {
 
 		@Override
-		public UTextureBuilder readTexture(DataInputEx input) throws IOException {
+		public UTextureBuilder readTexture(UGfxDataInput input) throws IOException {
 			UTexture2DBuilder tex = new UTexture2DBuilder();
 
-			tex.setData(ByteBuffer.wrap(input.readBytes(input.readInt())));
+			tex.setData(input.readRawBuffer());
 
 			return tex;
 		}
@@ -108,18 +112,45 @@ public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 		}
 
 		@Override
-		public void writeTexture(UTexture tex, DataOutputEx output) throws IOException {
+		public void writeTexture(UTexture tex, UGfxDataOutput output) throws IOException {
 			ByteBuffer data = ((UTexture2D) tex).data;
-			byte[] bytes = null;
-			if (!data.hasArray()) {
-				bytes = new byte[data.capacity()];
-				data.rewind();
-				data.get(bytes);
-			} else {
-				bytes = data.array();
+			output.writeRawBuffer(data);
+		}
+	}
+
+	private static class Texture2DCubeSerializer implements ITextureSerializer {
+
+		@Override
+		public UTextureBuilder readTexture(UGfxDataInput input) throws IOException {
+			UTexture2DCubeBuilder tex = new UTexture2DCubeBuilder();
+
+			int faceCount = input.read();
+			for (int i = 0; i < faceCount; i++) {
+				tex.addFace(
+					new UTexture2DCube.UTextureCubeFace(
+						input.readEnum(UTextureFaceAssignment.class),
+						input.readRawBuffer()
+					)
+				);
 			}
-			output.writeInt(bytes.length);
-			output.write(bytes);
+
+			return tex;
+		}
+
+		@Override
+		public UTextureType getTexType() {
+			return UTextureType.TEX2D_CUBEMAP;
+		}
+
+		@Override
+		public void writeTexture(UTexture tex, UGfxDataOutput output) throws IOException {
+			UTexture2DCube cube = (UTexture2DCube) tex;
+
+			output.write(cube.faces.size());
+			for (UTexture2DCube.UTextureCubeFace face : cube.faces) {
+				output.writeEnum(face.assignment);
+				output.writeRawBuffer(face.data);
+			}
 		}
 	}
 }

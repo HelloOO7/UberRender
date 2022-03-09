@@ -4,7 +4,6 @@ import java.io.IOException;
 import urender.api.UTextureMagFilter;
 import urender.api.UTextureMinFilter;
 import urender.api.UTextureWrap;
-import urender.common.io.base.iface.DataOutputEx;
 import urender.engine.UShadingMethod;
 import urender.engine.UMaterial;
 import urender.engine.UMaterialBuilder;
