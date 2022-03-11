@@ -18,6 +18,9 @@ import urender.engine.shader.UUniformVector4;
 import urender.g3dio.ugfx.UGfxDataInput;
 import urender.g3dio.ugfx.UGfxDataOutput;
 
+/**
+ * Shared class for reading/writing UUniformList from/to UGfx streams.
+ */
 public class GfxUniformListIO {
 
 	public static void readUniformList(UUniformList dest, UGfxDataInput in) throws IOException {

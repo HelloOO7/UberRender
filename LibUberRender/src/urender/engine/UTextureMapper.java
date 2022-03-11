@@ -4,6 +4,9 @@ import urender.api.UTextureMagFilter;
 import urender.api.UTextureMinFilter;
 import urender.api.UTextureWrap;
 
+/**
+ * Texture sampling parameter descriptor.
+ */
 public class UTextureMapper {
 
 	String textureName;

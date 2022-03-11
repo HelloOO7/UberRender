@@ -3,6 +3,9 @@ package urender.engine.shader;
 import urender.api.UObjHandle;
 import urender.api.backend.RenderingBackend;
 
+/**
+ * 32-bit int uniform value.
+ */
 public class UUniformInt extends UUniform<Integer> {
 
 	public UUniformInt(String name) {

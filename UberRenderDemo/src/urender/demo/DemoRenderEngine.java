@@ -94,6 +94,7 @@ public class DemoRenderEngine extends UGfxRenderer {
 			loadResource(GBUFFER_COMPOSE_MODEL, "GBufferComposeQuad.gfx");
 			loadResource(FILL_SCREEN_MODEL, "FillScreenQuad.gfx");
 		} catch (Exception ex) {
+			ex.printStackTrace();
 			System.err.println("Error while loading critical system resources!");
 		}
 	}

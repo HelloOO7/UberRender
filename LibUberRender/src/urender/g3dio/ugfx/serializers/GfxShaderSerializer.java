@@ -7,6 +7,9 @@ import urender.g3dio.ugfx.UGfxDataInput;
 import urender.g3dio.ugfx.UGfxDataOutput;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
+/**
+ * UGfx Shader resource serializer.
+ */
 public class GfxShaderSerializer implements IGfxResourceSerializer<UShader> {
 	
 	@Override

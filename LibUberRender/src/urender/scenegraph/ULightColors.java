@@ -2,6 +2,9 @@ package urender.scenegraph;
 
 import org.joml.Vector3f;
 
+/**
+ * Ambient/diffuse/specular light color set.
+ */
 public class ULightColors {
 
 	/**

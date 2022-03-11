@@ -19,6 +19,9 @@ import urender.api.UTextureSwizzleChannel;
 import urender.api.UTextureType;
 import urender.api.UTextureWrap;
 
+/**
+ * OpenGL 4.0 API enum translator.
+ */
 public class GLAPITranslator implements APITranslator {
 
 	@Override

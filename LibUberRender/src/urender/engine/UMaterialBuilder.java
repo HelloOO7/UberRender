@@ -1,5 +1,8 @@
 package urender.engine;
 
+/**
+ * Material resource builder.
+ */
 public class UMaterialBuilder extends UGfxObjectBuilder<UMaterial> {
 
 	private UMaterial material = new UMaterial();

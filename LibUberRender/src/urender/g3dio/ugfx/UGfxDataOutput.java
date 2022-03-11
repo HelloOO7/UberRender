@@ -7,6 +7,9 @@ import urender.common.io.base.impl.ext.data.DataOutStream;
 import urender.g3dio.ugfx.loaders.IGfxResourceLoader;
 import urender.g3dio.ugfx.serializers.IGfxEnumSerializerProvider;
 
+/**
+ * UGfx data output stream extension.
+ */
 public class UGfxDataOutput extends DataOutStream {
 
 	private final IGfxResourceLoader loader;

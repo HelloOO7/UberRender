@@ -18,6 +18,9 @@ import urender.api.UTextureMinFilter;
 import urender.api.UTextureType;
 import urender.api.UTextureWrap;
 
+/**
+ * Abstract API enum translator adapter.
+ */
 public interface APITranslator {
 	public int getDataType(UDataType type);
 	public int getPrimitiveType(UPrimitiveType type);

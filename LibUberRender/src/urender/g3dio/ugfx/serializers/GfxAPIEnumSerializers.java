@@ -12,6 +12,9 @@ import urender.api.UTextureSwizzleChannel;
 import urender.api.UTextureType;
 import urender.api.UTextureWrap;
 
+/**
+ * UGfx enum serializers for urender.api enum constants.
+ */
 public class GfxAPIEnumSerializers extends AbstractGfxEnumSerializerProvider {
 
 	private static final GfxAPIEnumSerializers INSTANCE = new GfxAPIEnumSerializers();

@@ -4,7 +4,6 @@ import urender.engine.shader.UShaderProgram;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import org.joml.Vector3f;
 import urender.api.UBufferType;
 import urender.api.UBufferUsageHint;
 import urender.api.UDataType;
@@ -12,6 +11,9 @@ import urender.api.UObjHandle;
 import urender.api.UPrimitiveType;
 import urender.api.backend.RenderingBackend;
 
+/**
+ * Mesh/geometry resource.
+ */
 public class UMesh extends UGfxEngineObject {
 
 	UPrimitiveType primitiveType;

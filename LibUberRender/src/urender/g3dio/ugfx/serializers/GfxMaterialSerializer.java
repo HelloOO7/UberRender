@@ -15,6 +15,9 @@ import urender.g3dio.ugfx.UGfxDataOutput;
 import urender.g3dio.ugfx.UGfxFormatRevisions;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
+/**
+ * UGfx Material resource serializer.
+ */
 public class GfxMaterialSerializer implements IGfxResourceSerializer<UMaterial> {
 
 	@Override

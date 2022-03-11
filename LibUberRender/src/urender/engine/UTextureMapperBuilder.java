@@ -5,6 +5,9 @@ import urender.api.UTextureMinFilter;
 import urender.api.UTextureWrap;
 import urender.common.IBuilder;
 
+/**
+ * Texture mapper builder.
+ */
 public class UTextureMapperBuilder implements IBuilder<UTextureMapper> {
 
 	private UTextureMapper mapper = new UTextureMapper();

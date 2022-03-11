@@ -70,13 +70,16 @@ uniform vec3 Eye;
 #define IS_UNLIT nrm.w
 
 void GetInputs(vec2 texcoord) {
+    nrm = texture(gbuf_Normal, texcoord).xyzw;
+    if (nrm.w == 0.0) {
+    discard;
+    }
+    alb = texture(gbuf_Albedo, texcoord).rgba;
     depth = texture(gbuf_Depth, texcoord).x;
     vec4 posSample = texture(gbuf_Position, texcoord);
     pos = posSample.xyz;
     shininess = posSample.w;
-    nrm = texture(gbuf_Normal, texcoord).xyzw;
     nrm.xyz = normalize(nrm.xyz); //renormalize in G-buffer shader after bump map in normal shader
-    alb = texture(gbuf_Albedo, texcoord).rgba;
     specular = texture(gbuf_Specular, texcoord).rgb;
     emission = texture(gbuf_Emission, texcoord).rgb;
     viewDir = normalize(Eye - pos);
@@ -162,7 +165,6 @@ vec3 CalcLighting() {
     }
 
     lighting += emission;
-    lighting = mix(lighting, alb.xyz, IS_UNLIT);
 
     return lighting;
 }

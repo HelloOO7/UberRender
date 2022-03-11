@@ -4,6 +4,9 @@ import org.joml.Vector4f;
 import urender.api.UObjHandle;
 import urender.api.backend.RenderingBackend;
 
+/**
+ * 4-component 32-bit floating point vector.
+ */
 public class UUniformVector4 extends UUniform<Vector4f> {
 
 	public UUniformVector4(String name) {

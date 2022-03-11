@@ -2,6 +2,9 @@ package urender.scenegraph;
 
 import org.joml.Matrix4f;
 
+/**
+ * Scene camera base class.
+ */
 public abstract class UCamera extends UGfxScenegraphObject {
 	/**
 	 * Near clip plane Z.

@@ -3,6 +3,9 @@ package urender.engine;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 2D Cubemap texture resource builder.
+ */
 public class UTexture2DCubeBuilder extends UTextureBuilder {
 
 	private List<UTexture2DCube.UTextureCubeFace> faces = new ArrayList<>();

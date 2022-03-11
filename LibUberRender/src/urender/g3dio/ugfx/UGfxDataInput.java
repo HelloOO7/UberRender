@@ -7,6 +7,9 @@ import urender.common.io.base.impl.ext.data.DataInStream;
 import urender.g3dio.ugfx.loaders.IGfxResourceLoader;
 import urender.g3dio.ugfx.serializers.IGfxEnumSerializerProvider;
 
+/**
+ * UGfx data input stream extension.
+ */
 public class UGfxDataInput extends DataInStream {
 
 	private int version;

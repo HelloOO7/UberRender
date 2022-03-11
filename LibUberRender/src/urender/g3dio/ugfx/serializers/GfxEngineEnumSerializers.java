@@ -3,9 +3,11 @@ package urender.g3dio.ugfx.serializers;
 import java.util.HashMap;
 import java.util.Map;
 import urender.engine.UShadingMethod;
-import urender.engine.UMaterialDrawLayer;
 import urender.engine.shader.UUniformType;
 
+/**
+ * UGfx enum serializers for urender.engine enum constants.
+ */
 public class GfxEngineEnumSerializers extends AbstractGfxEnumSerializerProvider {
 
 	private static final GfxEngineEnumSerializers INSTANCE = new GfxEngineEnumSerializers();

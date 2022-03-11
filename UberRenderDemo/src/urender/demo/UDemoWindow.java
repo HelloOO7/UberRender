@@ -31,7 +31,7 @@ public class UDemoWindow extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        surface = new urender.demo.GLJPanelDummy();
+        surface = new urender.demo.DemoSurface();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Demo");
@@ -87,6 +87,6 @@ public class UDemoWindow extends javax.swing.JFrame {
 	}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private urender.demo.GLJPanelDummy surface;
+    private urender.demo.DemoSurface surface;
     // End of variables declaration//GEN-END:variables
 }

@@ -2,6 +2,9 @@ package urender.engine;
 
 import urender.api.UTextureFormat;
 
+/**
+ * Texture resource builder.
+ */
 public abstract class UTextureBuilder extends UGfxObjectBuilder<UTexture> {
 
 	protected String name;

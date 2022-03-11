@@ -4,6 +4,9 @@ import org.joml.Matrix4f;
 import urender.api.UObjHandle;
 import urender.api.backend.RenderingBackend;
 
+/**
+ * 4x4 32-bit floating point transform matrix.
+ */
 public class UUniformMatrix4 extends UUniform<Matrix4f> {
 
 	public UUniformMatrix4(String name) {

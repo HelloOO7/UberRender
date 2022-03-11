@@ -10,6 +10,9 @@ import urender.g3dio.ugfx.serializers.GfxTextureSerializer;
 import urender.g3dio.ugfx.serializers.IGfxEnumSerializerProvider;
 import urender.g3dio.ugfx.serializers.IGfxResourceSerializer;
 
+/**
+ * Default IGfxResourceLoader implementation for basic engine objects.
+ */
 public class DefaultGfxResourceLoader implements IGfxResourceLoader {
 
 	private static DefaultGfxResourceLoader SINGLETON;

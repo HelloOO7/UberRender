@@ -1,5 +1,8 @@
 package urender.engine;
 
+/**
+ * Enum type ID of UGfxEngineObject child classes.
+ */
 public enum UGfxEngineObjectType {
 	/**
 	 * Geometry mesh.

@@ -2,6 +2,9 @@ package urender.engine;
 
 import org.joml.Vector3f;
 
+/**
+ * Axis-aligned bounding box.
+ */
 public class UBoundingBox {
 
 	public Vector3f min = new Vector3f(Float.MAX_VALUE);

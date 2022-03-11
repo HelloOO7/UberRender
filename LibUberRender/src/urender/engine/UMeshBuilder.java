@@ -4,6 +4,9 @@ import java.nio.ByteBuffer;
 import urender.api.UDataType;
 import urender.api.UPrimitiveType;
 
+/**
+ * Mesh/geometry resource builder.
+ */
 public class UMeshBuilder extends UGfxObjectBuilder<UMesh> {
 
 	private UMesh mesh = new UMesh();

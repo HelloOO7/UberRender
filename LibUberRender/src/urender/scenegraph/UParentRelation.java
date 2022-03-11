@@ -2,6 +2,9 @@ package urender.scenegraph;
 
 import java.util.List;
 
+/**
+ * Interface for parent/child relations between scenegraph nodes.
+ */
 public interface UParentRelation {
 
 	/**

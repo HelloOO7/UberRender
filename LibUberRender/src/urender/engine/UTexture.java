@@ -5,6 +5,9 @@ import urender.api.UTextureFormat;
 import urender.api.UTextureType;
 import urender.api.backend.RenderingBackend;
 
+/**
+ * Texture resource base class.
+ */
 public abstract class UTexture extends UGfxEngineObject {
 
 	protected final UObjHandle __handle = new UObjHandle();

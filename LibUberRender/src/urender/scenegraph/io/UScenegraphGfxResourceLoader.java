@@ -4,6 +4,9 @@ import urender.g3dio.ugfx.loaders.IGfxResourceLoader;
 import urender.g3dio.ugfx.serializers.*;
 import urender.scenegraph.io.serializers.GfxModelSerializer;
 
+/**
+ * IGfxResourceLoader implementation for scenegraph objects and their child resources.
+ */
 public class UScenegraphGfxResourceLoader implements IGfxResourceLoader {
 
 	private static UScenegraphGfxResourceLoader SINGLETON;

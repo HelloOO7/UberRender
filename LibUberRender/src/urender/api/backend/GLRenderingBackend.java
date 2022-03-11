@@ -30,6 +30,9 @@ import urender.api.UTextureMinFilter;
 import urender.api.UTextureType;
 import urender.api.UTextureWrap;
 
+/**
+ * OpenGL 4.0 rendering backend core.
+ */
 public class GLRenderingBackend implements RenderingBackend {
 
 	private static final boolean DEBUG = false;

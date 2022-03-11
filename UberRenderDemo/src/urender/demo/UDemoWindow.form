@@ -43,7 +43,7 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Container class="urender.demo.GLJPanelDummy" name="surface">
+    <Container class="urender.demo.DemoSurface" name="surface">
 
       <Layout>
         <DimensionLayout dim="0">

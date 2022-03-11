@@ -4,6 +4,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Named engine object base class.
+ */
 public abstract class UGfxObject {
 
 	protected String name;

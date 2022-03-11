@@ -5,6 +5,9 @@ import urender.api.UTextureFormat;
 import urender.api.UTextureType;
 import urender.api.backend.RenderingBackend;
 
+/**
+ * Single-face 2D texture resource.
+ */
 public class UTexture2D extends UTexture {
 
 	public final ByteBuffer data;

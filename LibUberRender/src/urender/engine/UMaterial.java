@@ -7,6 +7,9 @@ import urender.api.backend.RenderingBackend;
 import urender.engine.shader.UShaderProgram;
 import urender.engine.shader.UUniformList;
 
+/**
+ * Material resource.
+ */
 public class UMaterial extends UGfxEngineObject {
 
 	String shaderProgramName;

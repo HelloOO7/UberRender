@@ -1,5 +1,8 @@
 package urender.scenegraph;
 
+/**
+ * Enum type ID of UGfxScenegraphObject child classes.
+ */
 public enum UGfxScenegraphObjectType {
 	/**
 	 * 3D scene root.

@@ -1,5 +1,8 @@
 package urender.scenegraph;
 
+/**
+ * Light source base class.
+ */
 public abstract class ULight extends UGfxScenegraphObject {
 
 	@Override

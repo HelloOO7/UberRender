@@ -8,6 +8,7 @@ import urender.engine.shader.UUniform;
 import urender.engine.shader.UUniformFloat;
 import urender.g3dio.ugfx.UGfxResource;
 import urender.scenegraph.UCameraLookAtOrbit;
+import urender.scenegraph.UCameraViewpoint;
 import urender.scenegraph.UDirectionalLight;
 import urender.scenegraph.UPointLight;
 import urender.scenegraph.UScene;
@@ -21,6 +22,7 @@ public class DemoScene extends UScene {
 	private static final boolean LOAD_RESOURCES_FROM_CLASSPATH = false;
 
 	public final UCameraLookAtOrbit orbitCamera = new UCameraLookAtOrbit();
+	public final UCameraViewpoint animationCamera = new UCameraViewpoint();
 
 	private final UUniformFloat time = new UUniformFloat("time", 0f);
 
@@ -29,7 +31,9 @@ public class DemoScene extends UScene {
 	public DemoScene() {
 		addGlobalUniform(time);
 
-		camera = orbitCamera;
+		camera = animationCamera;
+		animationCamera.zNear = 0.1f;
+		animationCamera.zFar = 400f;
 
 		//prepareDemoActor("Demo.gfx");
 		//prepareDemoActor("TorusDeferred.gfx");

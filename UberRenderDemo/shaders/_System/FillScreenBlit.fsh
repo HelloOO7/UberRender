@@ -7,5 +7,5 @@ in vec2 gbuf_Texcoord;
 out vec4 FragColor;
 
 void main(void) {
-	FragColor = texture2D(forwardSurface, gbuf_Texcoord);
+	FragColor = vec4(texture(forwardSurface, gbuf_Texcoord).xyz, 1.0);
 }

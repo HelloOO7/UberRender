@@ -59,7 +59,7 @@ void main(void) {
 
 	vec3 nrmValue = vec3(texture(TexNrm, FS_Texcoord0).xy, 1.0) * 2.0 - 1.0;
 
-	gbuf_Normal = vec4(tbn * mix(vec3(0.0, 0.0, 1.0), nrmValue, NrmIntensity), 0.0);
+	gbuf_Normal = vec4(tbn * mix(vec3(0.0, 0.0, 1.0), nrmValue, NrmIntensity), 1.0);
 	gbuf_Position = vec4(FS_View, SpmShininess);
 
 	if (ShadowMapEnable) {

@@ -1,6 +1,5 @@
 package urender.engine;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +8,9 @@ import urender.api.UTextureFormat;
 import urender.api.UTextureType;
 import urender.api.backend.RenderingBackend;
 
+/**
+ * 2D Cubemap texture resource.
+ */
 public class UTexture2DCube extends UTexture {
 
 	public List<UTextureCubeFace> faces = new ArrayList<>();
@@ -47,6 +49,9 @@ public class UTexture2DCube extends UTexture {
 		return UTextureType.TEX2D_CUBEMAP;
 	}
 
+	/**
+	 * Face of a cubemap texture.
+	 */
 	public static class UTextureCubeFace {
 
 		public UTextureFaceAssignment assignment;

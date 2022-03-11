@@ -12,6 +12,9 @@ import urender.g3dio.ugfx.UGfxDataOutput;
 import urender.g3dio.ugfx.UGfxFormatRevisions;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
+/**
+ * UGfx Mesh resource serializer.
+ */
 public class GfxMeshSerializer implements IGfxResourceSerializer<UMesh> {
 
 	@Override

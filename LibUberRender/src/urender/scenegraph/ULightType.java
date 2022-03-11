@@ -1,5 +1,8 @@
 package urender.scenegraph;
 
+/**
+ * Enum type ID of ULight child classes.
+ */
 public enum ULightType {
 	/**
 	 * Directional lamp/Sun.

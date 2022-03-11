@@ -2,6 +2,9 @@ package urender.engine;
 
 import urender.api.UDataType;
 
+/**
+ * Vertex buffer attribute builder.
+ */
 public class UVertexAttributeBuilder {
 
 	private UVertexAttribute attr = new UVertexAttribute();

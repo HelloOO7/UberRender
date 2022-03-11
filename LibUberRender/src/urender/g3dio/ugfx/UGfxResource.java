@@ -1,6 +1,8 @@
 package urender.g3dio.ugfx;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.HashMap;
@@ -63,11 +65,9 @@ public class UGfxResource {
 	 * @param consumer The consumer to load resources into.
 	 */
 	public static void loadResourceFile(File f, IGfxResourceLoader loader, IGfxResourceConsumer consumer) {
-		try (ReadableStream in = FileStream.create(f)) {
+		try (ReadableStream in = new InputStreamReadable(new BufferedInputStream(new FileInputStream(f)))) {
 			loadResource(in, loader, consumer);
-		} catch (IOException ex) {
-			Logger.getLogger(UGfxResource.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (InvalidMagicException ex) {
+		} catch (Exception ex) {
 			throw new RuntimeException("Failed to read UGfxResource " + f.getAbsolutePath(), ex);
 		}
 	}

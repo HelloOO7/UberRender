@@ -2,6 +2,9 @@ package urender.scenegraph;
 
 import org.joml.Vector3f;
 
+/**
+ * Interface for scale/rotation/translation transform of scenegraph nodes.
+ */
 public interface UNodeTransform {
 
 	/**

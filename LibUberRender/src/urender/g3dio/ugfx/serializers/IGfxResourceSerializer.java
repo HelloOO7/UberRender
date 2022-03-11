@@ -5,6 +5,11 @@ import urender.g3dio.ugfx.UGfxDataInput;
 import urender.g3dio.ugfx.UGfxDataOutput;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
+/**
+ * Interface for serialization and deserialization of a resource class.
+ *
+ * @param <R> The class that this serializer can de/serialize.
+ */
 public interface IGfxResourceSerializer<R> {
 
 	/**

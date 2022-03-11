@@ -6,8 +6,6 @@ import urender.api.UTextureFaceAssignment;
 import urender.api.UTextureFormat;
 import urender.api.UTextureSwizzleChannel;
 import urender.api.UTextureType;
-import urender.common.io.base.iface.DataInputEx;
-import urender.common.io.base.iface.DataOutputEx;
 import urender.engine.UTexture;
 import urender.engine.UTexture2D;
 import urender.engine.UTexture2DBuilder;
@@ -20,6 +18,9 @@ import urender.g3dio.ugfx.UGfxDataOutput;
 import urender.g3dio.ugfx.UGfxFormatRevisions;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 
+/**
+ * UGfx Texture resource serializer.
+ */
 public class GfxTextureSerializer implements IGfxResourceSerializer<UTexture> {
 
 	private static final ITextureSerializer[] TEX_SERIALIZERS = new ITextureSerializer[]{

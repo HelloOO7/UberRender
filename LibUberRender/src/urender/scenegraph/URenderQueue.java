@@ -14,6 +14,9 @@ import urender.engine.UTexture;
 import urender.engine.shader.UShaderProgram;
 import urender.engine.shader.UUniformList;
 
+/**
+ * Calculated and sorted render object queue of a scenegraph tree.
+ */
 public class URenderQueue {
 
 	List<UDrawSources> drawSourcesAll = new ArrayList<>();
@@ -88,6 +91,9 @@ public class URenderQueue {
 		return max;
 	}
 
+	/**
+	 * Render queue state of a scenegraph node.
+	 */
 	public static class URenderQueueNodeState {
 
 		/**
@@ -124,6 +130,9 @@ public class URenderQueue {
 		}
 	}
 
+	/**
+	 * Render queue state of a geometry mesh of a scenegraph node.
+	 */
 	public static class URenderQueueMeshState implements Comparable<URenderQueueMeshState> {
 
 		/**

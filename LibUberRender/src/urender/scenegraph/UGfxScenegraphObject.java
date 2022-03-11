@@ -2,6 +2,9 @@ package urender.scenegraph;
 
 import urender.engine.UGfxObject;
 
+/**
+ * Base class for URender engine objects.
+ */
 public abstract class UGfxScenegraphObject extends UGfxObject {
 
 	/**

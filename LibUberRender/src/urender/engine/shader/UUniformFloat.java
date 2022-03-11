@@ -3,6 +3,9 @@ package urender.engine.shader;
 import urender.api.UObjHandle;
 import urender.api.backend.RenderingBackend;
 
+/**
+ * 32-bit float uniform value.
+ */
 public class UUniformFloat extends UUniform<Float> {
 
 	public UUniformFloat(String name) {

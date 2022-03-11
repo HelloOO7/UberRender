@@ -7,6 +7,9 @@ import urender.g3dio.ugfx.UGfxDataOutput;
 import urender.g3dio.ugfx.adapters.IGfxResourceConsumer;
 import urender.scenegraph.UModel;
 
+/**
+ * UGfx Model resource serializer.
+ */
 public class GfxModelSerializer implements IGfxResourceSerializer<UModel> {
 
 	@Override

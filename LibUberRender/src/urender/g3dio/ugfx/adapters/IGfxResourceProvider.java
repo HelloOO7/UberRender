@@ -1,5 +1,8 @@
 package urender.g3dio.ugfx.adapters;
 
+/**
+ * Interface for feeding resource objects to a UGfx output stream.
+ */
 public interface IGfxResourceProvider {
 
 	/**

@@ -6,6 +6,10 @@ import urender.api.UObjHandle;
 import urender.api.backend.RenderingBackend;
 import urender.engine.UGfxObject;
 
+/**
+ * Shader program uniform value.
+ * @param <T> Class of the underlying values.
+ */
 public abstract class UUniform<T> extends UGfxObject {
 
 	protected T[] value;

@@ -9,6 +9,8 @@ import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.awt.GLJPanel;
 import com.jogamp.opengl.util.Animator;
 import com.jogamp.opengl.util.AnimatorBase;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -20,7 +22,7 @@ import urender.demo.perf.IPerfMonitor;
 import urender.scenegraph.UGfxRenderer;
 import urender.scenegraph.UCameraLookAtOrbit;
 
-public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventListener {
+public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventListener {
 
 	private static final int SUPERSAMPLING_SCALE = 2;
 
@@ -30,6 +32,7 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 	private UGfxRenderer renderer;
 
 	public final DemoScene rootScene = new DemoScene();
+	public final DemoAnimator animation = new DemoAnimator();
 
 	protected static class DefaultCaps extends GLCapabilities {
 
@@ -54,11 +57,11 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 	float rx = 0f;
 	float ry = 0f;
 
-	public GLJPanelDummy() {
+	public DemoSurface() {
 		this(new DefaultCaps(GLProfile.get(GLProfile.GL4)));
 	}
 
-	public GLJPanelDummy(GLCapabilities caps) {
+	public DemoSurface(GLCapabilities caps) {
 		super(caps);
 		super.addGLEventListener(this);
 		animator = new Animator(this);
@@ -108,6 +111,15 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 			}
 		});
 
+		addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+					rootScene.camera = rootScene.camera == rootScene.animationCamera ? rootScene.orbitCamera : rootScene.animationCamera;
+				}
+			}
+		});
+
 		renderer = new DemoRenderEngine(backend);
 	}
 
@@ -151,6 +163,8 @@ public class GLJPanelDummy extends GLJPanel implements GLAutoDrawable, GLEventLi
 		camera.rotation.set(rx, ry, 0f);
 		camera.target.set(0f, 0f, 0f);
 		camera.postTranslation.set(tx, ty, tz);
+
+		animation.apply(rootScene.animationCamera);
 
 		rootScene.setTimeCounter((float) (System.currentTimeMillis() % 86400000));
 

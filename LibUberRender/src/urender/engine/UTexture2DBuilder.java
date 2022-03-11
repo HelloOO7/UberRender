@@ -2,6 +2,9 @@ package urender.engine;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Single-face 2D texture resource builder.
+ */
 public class UTexture2DBuilder extends UTextureBuilder {
 
 	private ByteBuffer data;
