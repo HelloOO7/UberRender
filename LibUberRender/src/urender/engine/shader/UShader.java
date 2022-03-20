@@ -1,6 +1,8 @@
 package urender.engine.shader;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import urender.api.UObjHandle;
 import urender.api.UShaderType;
@@ -33,6 +35,15 @@ public class UShader extends UGfxEngineObject {
 		this.name = name;
 		this.type = type;
 		this.shaderData = source;
+	}
+	
+	/**
+	 * Changes the shader's local name.
+	 *
+	 * @param newName
+	 */
+	public void renameTo(String newName) {
+		this.name = newName;
 	}
 
 	/**
@@ -98,6 +109,22 @@ public class UShader extends UGfxEngineObject {
 		if (__shObj.getAndResetForceUpload(rnd)) {
 			rnd.shaderCompileSource(__shObj, shaderData);
 		}
+	}
+
+	public void delete(RenderingBackend rnd) {
+		if (__shObj.isValid(rnd)) {
+			rnd.shaderDelete(__shObj);
+		}
+	}
+	
+	public static void deleteAll(RenderingBackend rnd, Iterable<UShader> shaders) {
+		List<UObjHandle> handles = new ArrayList<>();
+		for (UShader shader : shaders) {
+			if (shader.__shObj.isValid(rnd)) {
+				handles.add(shader.__shObj);
+			}
+		}
+		rnd.shaderDelete(handles.toArray(new UObjHandle[handles.size()]));
 	}
 
 	/**

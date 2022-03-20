@@ -19,19 +19,23 @@ import java.awt.event.MouseWheelListener;
 import javax.swing.SwingUtilities;
 import urender.api.backend.GLRenderingBackend;
 import urender.demo.perf.IPerfMonitor;
+import urender.engine.UShadingMethod;
 import urender.scenegraph.UGfxRenderer;
 import urender.scenegraph.UCameraLookAtOrbit;
 
 public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventListener {
 
-	private static final int SUPERSAMPLING_SCALE = 2;
+	private static final int SUPERSAMPLING_SCALE = 4;
+	private static final boolean FIX_RESOLUTION_USE = true;
+	private static final int FIX_RESOLUTION_W = 3840;
+	private static final int FIX_RESOLUTION_H = 2160;
 
 	private AnimatorBase animator;
 
 	private GLRenderingBackend backend = new GLRenderingBackend();
 	private UGfxRenderer renderer;
 
-	public final DemoScene rootScene = new DemoScene();
+	private DemoScene rootScene;
 	public final DemoAnimator animation = new DemoAnimator();
 
 	protected static class DefaultCaps extends GLCapabilities {
@@ -61,7 +65,7 @@ public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventList
 		this(new DefaultCaps(GLProfile.get(GLProfile.GL4)));
 	}
 
-	public DemoSurface(GLCapabilities caps) {
+	private DemoSurface(GLCapabilities caps) {
 		super(caps);
 		super.addGLEventListener(this);
 		animator = new Animator(this);
@@ -114,7 +118,7 @@ public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventList
 		addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+				if (e.getKeyCode() == KeyEvent.VK_SPACE && rootScene != null) {
 					rootScene.camera = rootScene.camera == rootScene.animationCamera ? rootScene.orbitCamera : rootScene.animationCamera;
 				}
 			}
@@ -123,12 +127,18 @@ public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventList
 		renderer = new DemoRenderEngine(backend);
 	}
 
+	public void loadScene(DemoScene scene) {
+		this.rootScene = scene;
+	}
+
 	private Integer backendIdentity = System.identityHashCode(this);
 
 	@Override
 	public void init(GLAutoDrawable glad) {
 		backendIdentity *= 7;
 		backend.setGL(glad.getGL().getGL4(), backendIdentity);
+
+		renderer.changeShadingMethod(UShadingMethod.FORWARD); //setup forward framebuffer
 
 		GL4 gl = glad.getGL().getGL4();
 
@@ -141,7 +151,10 @@ public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventList
 
 	@Override
 	public void dispose(GLAutoDrawable glad) {
-
+		if (rootScene != null) {
+			rootScene.deleteAll(renderer);
+		}
+		renderer.shutdown();
 	}
 
 	private IPerfMonitor perfMonitor;
@@ -153,25 +166,30 @@ public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventList
 	@Override
 	public void display(GLAutoDrawable glad) {
 		long displayLoopStart = System.nanoTime();
+		
+		int w = FIX_RESOLUTION_USE ? FIX_RESOLUTION_W : (getWidth() * SUPERSAMPLING_SCALE);
+		int h = FIX_RESOLUTION_USE ? FIX_RESOLUTION_H : (getHeight() * SUPERSAMPLING_SCALE);
 
-		UCameraLookAtOrbit camera = rootScene.orbitCamera;
-		camera.FOV = (float) Math.toRadians(60f);
-		camera.aspect = getWidth() / (float) getHeight();
-		camera.zNear = 0.1f;
-		camera.zFar = 5000f;
+		backend.viewport(0, 0, w, h);
+		renderer.setAllFramebufferResolution(w, h);
 
-		camera.rotation.set(rx, ry, 0f);
-		camera.target.set(0f, 0f, 0f);
-		camera.postTranslation.set(tx, ty, tz);
+		if (rootScene != null) {
+			UCameraLookAtOrbit camera = rootScene.orbitCamera;
+			camera.FOV = (float) Math.toRadians(60f);
+			camera.aspect = getWidth() / (float) getHeight();
+			camera.zNear = 0.1f;
+			camera.zFar = 5000f;
 
-		animation.apply(rootScene.animationCamera);
+			camera.rotation.set(rx, ry, 0f);
+			camera.target.set(0f, 0f, 0f);
+			camera.postTranslation.set(tx, ty, tz);
 
-		rootScene.setTimeCounter((float) (System.currentTimeMillis() % 86400000));
+			animation.apply(rootScene.animationCamera);
 
-		backend.viewport(0, 0, getWidth() * SUPERSAMPLING_SCALE, getHeight() * SUPERSAMPLING_SCALE);
-		renderer.setAllFramebufferResolution(getWidth() * SUPERSAMPLING_SCALE, getHeight() * SUPERSAMPLING_SCALE);
+			rootScene.setTimeCounter((float) (System.currentTimeMillis() % 86400000));
 
-		renderer.drawScene(rootScene);
+			renderer.drawScene(rootScene);
+		}
 
 		backend.viewport(0, 0, getWidth(), getHeight());
 

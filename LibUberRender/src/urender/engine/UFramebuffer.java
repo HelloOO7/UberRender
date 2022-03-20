@@ -100,4 +100,16 @@ public class UFramebuffer {
 			lastDrawBuffers = drawBuffers;
 		}
 	}
+
+	public void delete(RenderingBackend rnd) {
+		if (__handle.isValid(rnd)) {
+			rnd.framebufferDelete(__handle);
+		}
+	}
+
+	public void deleteRenderTargets(RenderingBackend rnd) {
+		for (URenderTarget rt : renderTargets) {
+			rt.delete(rnd);
+		}
+	}
 }

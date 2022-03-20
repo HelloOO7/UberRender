@@ -1,4 +1,4 @@
-package urender.demo.editor;
+package urender.demo;
 
 import java.awt.Component;
 import java.io.File;
@@ -9,14 +9,22 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
-public class EditorUIUtility {
+public class DemoUIUtility {
 
 	public static void showInfoMessage(Component parent, String title, String msg) {
 		JOptionPane.showMessageDialog(parent, msg, title, JOptionPane.INFORMATION_MESSAGE);
 	}
 
+	public static void showErrorMessage(Component parent, String title, String msg) {
+		JOptionPane.showMessageDialog(parent, msg, title, JOptionPane.ERROR_MESSAGE);
+	}
+
 	public static String callNameInput(Component parent, String title, String msg) {
 		return JOptionPane.showInputDialog(parent, msg, title, JOptionPane.PLAIN_MESSAGE);
+	}
+
+	public static File callGFXFileSelect(Component parent, boolean save) {
+		return callFileSelect(parent, save, "UberRender Graphics Resource | *.gfx", ".gfx");
 	}
 
 	public static File callFileSelect(Component parent) {
@@ -63,39 +71,41 @@ public class EditorUIUtility {
 		if (details != null) {
 			details.actionPerformed(null);
 		}
+		int dlgResult = -1;
 		if (save) {
-			jfc.showSaveDialog(parent);
+			dlgResult = jfc.showSaveDialog(parent);
 		} else {
-			jfc.showOpenDialog(parent);
+			dlgResult = jfc.showOpenDialog(parent);
 		}
 
 		List<File> result = new ArrayList<>();
 
-		if (!multiselect) {
-			File f = jfc.getSelectedFile();
-			if (f != null && save && filterExt != null) {
-				String name = f.getName();
-				boolean hasExt = false;
-				for (String ext : filterExt) {
-					if (name.endsWith(ext)) {
-						hasExt = true;
-						break;
+		if (dlgResult == JFileChooser.APPROVE_OPTION) {
+			if (!multiselect) {
+				File f = jfc.getSelectedFile();
+				if (f != null && save && filterExt != null) {
+					String name = f.getName();
+					boolean hasExt = false;
+					for (String ext : filterExt) {
+						if (name.endsWith(ext)) {
+							hasExt = true;
+							break;
+						}
+					}
+					if (!hasExt) {
+						if (filterExt.length > 0) {
+							f = new File(f.getPath() + filterExt[0]);
+						}
 					}
 				}
-				if (!hasExt) {
-					if (filterExt.length > 0) {
-						f = new File(f.getPath() + filterExt[0]);
-					}
-				}
-			}
-			result.add(f);
-		}
-		else {
-			for (File f : jfc.getSelectedFiles()) {
 				result.add(f);
+			} else {
+				for (File f : jfc.getSelectedFiles()) {
+					result.add(f);
+				}
 			}
 		}
-		
+
 		return result;
 	}
 }

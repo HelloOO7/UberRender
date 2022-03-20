@@ -22,6 +22,7 @@ import urender.scenegraph.UDrawSources;
 import urender.scenegraph.UGfxRenderer;
 import urender.scenegraph.ULightAdapter;
 import urender.scenegraph.URenderQueue;
+import urender.scenegraph.URenderQueueMeshState;
 import urender.scenegraph.UScene;
 import urender.scenegraph.USceneNode;
 import urender.scenegraph.io.USceneNodeGfxResourceAdapter;
@@ -38,17 +39,26 @@ public class DemoRenderEngine extends UGfxRenderer {
 	private final URenderTarget rtPosition = new URenderTarget(0, "PositionTexture", UFramebufferAttachment.COLOR, UTextureFormat.RGBA16F);
 	private final URenderTarget rtNormal = new URenderTarget(1, "NormalTexture", UFramebufferAttachment.COLOR, UTextureFormat.RGBA16F);
 	private final URenderTarget rtAlbedo = new URenderTarget(2, "AlbedoTexture", UFramebufferAttachment.COLOR, UTextureFormat.RGBA8);
-	//We also have to store certain material properties in a G-buffer. For our shader, that will be mainly specular/emission intensity etc.
+	//We also have to store certain material properties in a G-buffer. For our shader, that will be specular and emission intensity.
 	private final URenderTarget rtSpecular = new URenderTarget(3, "SpecularTexture", UFramebufferAttachment.COLOR, UTextureFormat.RGBA8); //allow modifying each color intensity separately
 	private final URenderTarget rtEmission = new URenderTarget(4, "EmissionTexture", UFramebufferAttachment.COLOR, UTextureFormat.RGBA8);
+	//Depth render target shared for both deferred and forward rendering
 	private final URenderTarget rtSharedDepth = new URenderTarget(0, "DepthTexture", UFramebufferAttachment.DEPTH_STENCIL, UTextureFormat.DEPTH24_STENCIL8);
 
 	private final UFramebuffer framebufferGbuffer = new UFramebuffer(rtPosition, rtSharedDepth, rtNormal, rtAlbedo, rtSpecular, rtEmission);
 
 	//The forward-rendered pass renders directly to this target
 	//The deferred-rendered pass should render to it prior with setting gl_FragDepth to the depth texture value
-	private final URenderTarget rtForward = new URenderTarget(0, "ForwardSurface", UFramebufferAttachment.COLOR, UTextureFormat.RGBA8);
-	private final UFramebuffer framebufferForward = new UFramebuffer(rtForward, rtSharedDepth); //shared depth buffer for both deferred and forward shading
+	private final URenderTarget rtForward = new URenderTarget(
+		0, 
+		"ForwardSurface", 
+		UFramebufferAttachment.COLOR, 
+		UTextureFormat.RGBA8
+	);
+	private final UFramebuffer framebufferForward = new UFramebuffer(
+		rtForward, 
+		rtSharedDepth
+	); //shared depth buffer for both deferred and forward shading
 
 	private TurboLightManager lightMgr = new TurboLightManager();
 
@@ -99,7 +109,7 @@ public class DemoRenderEngine extends UGfxRenderer {
 		}
 	}
 
-	private void setGlobalMatrices(URenderQueue.URenderQueueMeshState state) {
+	private void setGlobalMatrices(URenderQueueMeshState state) {
 		projMtx.set(state.nodeState.projectionMatrix);
 		viewMtx.set(state.nodeState.viewMatrix);
 		modelMtx.set(state.nodeState.modelMatrix);
@@ -110,7 +120,7 @@ public class DemoRenderEngine extends UGfxRenderer {
 	}
 
 	private void drawScenePass(URenderQueue queue, int priority) {
-		for (URenderQueue.URenderQueueMeshState state : queue.queue()) {
+		for (URenderQueueMeshState state : queue.queue()) {
 			if (priority == -1 || state.getDrawPriority() == priority) {
 				setGlobalMatrices(state);
 

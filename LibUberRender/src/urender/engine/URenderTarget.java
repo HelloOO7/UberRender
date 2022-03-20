@@ -94,6 +94,16 @@ public class URenderTarget extends UTexture {
 			heightHandle.initialize(rnd, height);
 		}
 	}
+	
+	@Override
+	public void delete(RenderingBackend rnd) {
+		if (__drawBufferHandle.isValid(rnd)) {
+			rnd.drawBufferDelete(__drawBufferHandle);
+		}
+		widthHandle.reset(rnd);
+		heightHandle.reset(rnd);
+		super.delete(rnd);
+	}
 
 	/**
 	 * Binds the render target to a framebuffer.

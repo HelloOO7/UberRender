@@ -28,10 +28,10 @@ public class DemoScene extends UScene {
 
 	USceneNode star;
 
-	public DemoScene() {
+	public DemoScene(File demoFilePath) {
 		addGlobalUniform(time);
 
-		camera = animationCamera;
+		camera = orbitCamera;
 		animationCamera.zNear = 0.1f;
 		animationCamera.zFar = 400f;
 
@@ -40,19 +40,24 @@ public class DemoScene extends UScene {
 		//prepareDemoActor("Helicopter2.gfx").transform.getScale().set(3f);
 		//prepareDemoActor("HeightmapTest.gfx");
 		//star = prepareDemoActor("StarTest.gfx");
-		prepareDemoActor("UFC.gfx").transform.getScale().set(0.01f);
+		prepareDemoActor(demoFilePath.getAbsolutePath());
 
-		createLights();
+		createMoon();
+		createPointLights();
+
+		System.out.println("Light count: " + lights.size());
 	}
 
-	private void createLights() {
+	private void createMoon() {
 		UDirectionalLight moon = new UDirectionalLight();
 		moon.setName("lt_dir_Moon");
 		moon.direction = new Vector3f(0f, -1f, 1f);
 		moon.colors.ambient.set(.6f, .6f, .6f);
 		moon.colors.diffuse.set(1f, 1f, 1f);
 		lights.add(moon);
+	}
 
+	private void createPointLights() {
 		UPointLight point1 = new UPointLight();
 		point1.setName("lt_point_StartGate");
 		point1.position.set(2f, 10f, 0f);
@@ -94,23 +99,21 @@ public class DemoScene extends UScene {
 			new Vector3f(-28.22f, 37.80f, 11.74f),
 			new Vector3f(-28.59f, 37.93f, 16.06f),
 			new Vector3f(-28.35f, 35.97f, 19.01f),
-			new Vector3f(-27.62f, 32.21f, 19.99f),
-		};
+			new Vector3f(-27.62f, 32.21f, 19.99f),};
 		Vector3f[] LAMP_SPOT_LIGHT_DIRECTIONS = new Vector3f[]{
 			new Vector3f(-0.87f, -0.29f, 0.38f),
 			new Vector3f(-0.86f, -0.47f, 0.16f),
 			new Vector3f(-0.80f, -0.58f, 0.098f),
 			new Vector3f(-0.76f, -0.64f, -0.145f),
 			new Vector3f(-0.80f, -0.45f, -0.39f),
-			new Vector3f(-0.78f, -0.25f, -0.578f),
-		};
+			new Vector3f(-0.78f, -0.25f, -0.578f),};
 
 		for (int i = 0; i < LAMP_SPOT_LIGHTS.length; i++) {
 			USpotLight spotLight = new USpotLight();
 			spotLight.setName("lt_spot_lamp" + (i + 1));
 			spotLight.position.set(LAMP_SPOT_LIGHTS[i]);
 			spotLight.colors.ambient.set(0f);
-			spotLight.colors.diffuse.set(118/255f, 164/255f, 217/255f);
+			spotLight.colors.diffuse.set(118 / 255f, 164 / 255f, 217 / 255f);
 			spotLight.spotDirection.set(LAMP_SPOT_LIGHT_DIRECTIONS[i]);
 			spotLight.constantAttn = 1.0f;
 			spotLight.linearAttn = 0.35f;

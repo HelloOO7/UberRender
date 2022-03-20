@@ -147,6 +147,8 @@ public interface RenderingBackend {
 	 * @param type Type of the new texture.
 	 */
 	public void texInit(UObjHandle tex, UTextureType type);
+	
+	public void texDelete(UObjHandle... textures);
 
 	/**
 	 * Uploads texture data to VRAM.
@@ -191,6 +193,8 @@ public interface RenderingBackend {
 	 * @param unitIndex Index of the texture unit.
 	 */
 	public void texUnitInit(UObjHandle texUnit, int unitIndex);
+	
+	public void texUnitDelete(UObjHandle... texUnits);
 
 	/**
 	 * Binds a texture to a texture unit.
@@ -207,6 +211,8 @@ public interface RenderingBackend {
 	 * @param rb Handle for the object.
 	 */
 	public void renderBufferInit(UObjHandle rb);
+	
+	public void renderBufferDelete(UObjHandle... rbs);
 
 	/**
 	 * Initializes renderbuffer storage data.
@@ -224,6 +230,8 @@ public interface RenderingBackend {
 	 * @param fb Handle for the object.
 	 */
 	public void framebufferInit(UObjHandle fb);
+	
+	public void framebufferDelete(UObjHandle... fbs);
 
 	/**
 	 * Sets a framebuffer as current.
@@ -246,6 +254,8 @@ public interface RenderingBackend {
 	 * @param attachmentIndex Index of the draw buffer in a multi-member attachment.
 	 */
 	public void drawBufferInit(UObjHandle drawBuffer, UFramebufferAttachment attachment, int attachmentIndex);
+	
+	public void drawBufferDelete(UObjHandle... drawBuffers);
 
 	/**
 	 * Attaches a texture as a framebuffer draw buffer.
@@ -279,6 +289,8 @@ public interface RenderingBackend {
 	 * @param buffer Handle for the object.
 	 */
 	public void bufferInit(UObjHandle buffer);
+	
+	public void bufferDelete(UObjHandle... buffers);
 
 	/**
 	 * Uploads data to a VRAM data buffer.
@@ -340,6 +352,8 @@ public interface RenderingBackend {
 	 * @param type Type of the shader.
 	 */
 	public void shaderInit(UObjHandle shader, UShaderType type);
+	
+	public void shaderDelete(UObjHandle... shaders);
 
 	/**
 	 * Compiles a shader from source code. The source format is backend-defined.
@@ -355,6 +369,8 @@ public interface RenderingBackend {
 	 * @param program Handle for the program.
 	 */
 	public void programInit(UObjHandle program);
+	
+	public void programDelete(UObjHandle... programs);
 
 	/**
 	 * Attaches a vertex/fragment shader to a program.
@@ -363,6 +379,14 @@ public interface RenderingBackend {
 	 * @param shader Handle of the shader to be attached.
 	 */
 	public void programAttachShader(UObjHandle program, UObjHandle shader);
+	
+	/**
+	 * Detaches a vertex/fragment shader from a program.
+	 *
+	 * @param program Handle of the program to detach from.
+	 * @param shader Handle of the shader to be detached.
+	 */
+	public void programDetachShader(UObjHandle program, UObjHandle shader);
 
 	/**
 	 * Links a program with attached shaders.

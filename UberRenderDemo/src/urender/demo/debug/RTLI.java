@@ -44,6 +44,9 @@ public class RTLI extends javax.swing.JFrame {
 	}
 	
 	public void loadScene(UScene scene) {
+		dirLampsBox.removeAllItems();
+		pointLightsBox.removeAllItems();
+		spotLightBox.removeAllItems();
 		for (ULight light : scene.lights) {
 			switch (light.getLightType()) {
 				case DIRECTIONAL:

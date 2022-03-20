@@ -96,6 +96,7 @@ public class UMaterial extends UGfxEngineObject {
 	 * @param textures List to search for required texture resources.
 	 */
 	public void configureShader(UShaderProgram shader, RenderingBackend rnd, List<UTexture> textures) {
+		shader.use(rnd);
 		shaderParams.setup(shader, rnd);
 
 		int texUnitIdx = 0;

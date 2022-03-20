@@ -54,6 +54,14 @@ public class UScene extends UGfxScenegraphObject {
 		return new ArrayList<>();
 	}
 
+	public void delete(UGfxRenderer rnd) {
+		rootNode.delete(rnd);
+	}
+	
+	public void deleteAll(UGfxRenderer rnd) {
+		rootNode.deleteAll(rnd);
+	}
+	
 	@Override
 	public UGfxScenegraphObjectType getType() {
 		return UGfxScenegraphObjectType.SCENE;
@@ -72,8 +80,8 @@ public class UScene extends UGfxScenegraphObject {
 		return queue;
 	}
 
-	private void calcQueueNode(USceneNode node, URenderQueue.URenderQueueNodeState parentState, URenderQueue queue) {
-		URenderQueue.URenderQueueNodeState state = new URenderQueue.URenderQueueNodeState(node);
+	private void calcQueueNode(USceneNode node, URenderQueueNodeState parentState, URenderQueue queue) {
+		URenderQueueNodeState state = new URenderQueueNodeState(node);
 		queue.registDrawSources(state.drawSources);
 
 		if (parentState == null) {
@@ -123,7 +131,7 @@ public class UScene extends UGfxScenegraphObject {
 
 		for (UModel model : node.models) {
 			for (UModel.UMeshInstance meshInst : model.meshes) {
-				queue.enqueue(new URenderQueue.URenderQueueMeshState(state, meshInst));
+				queue.enqueue(new URenderQueueMeshState(state, meshInst));
 			}
 		}
 

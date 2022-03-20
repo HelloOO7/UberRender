@@ -131,6 +131,34 @@ public class UMesh extends UGfxEngineObject {
 		setupBuffer(rnd, UBufferType.IBO, __iboHandle, indexBuffer);
 		setupBuffer(rnd, UBufferType.VBO, __vboHandle, vertexBuffer);
 	}
+	
+	public void delete(RenderingBackend rnd) {
+		boolean iboValid = __iboHandle.isValid(rnd);
+		boolean vboValid = __vboHandle.isValid(rnd);
+		
+		if (iboValid && vboValid) {
+			rnd.bufferDelete(__iboHandle, __vboHandle);
+		}
+		else if (iboValid) {
+			rnd.bufferDelete(__iboHandle);
+		}
+		else if (vboValid) {
+			rnd.bufferDelete(__vboHandle);
+		}
+	}
+	
+	public static void deleteAll(RenderingBackend rnd, Iterable<UMesh> meshes) {
+		List<UObjHandle> buffers = new ArrayList<>();
+		for (UMesh m : meshes) {
+			if (m.__iboHandle.isValid(rnd)) {
+				buffers.add(m.__iboHandle);
+			}
+			if (m.__vboHandle.isValid(rnd)) {
+				buffers.add(m.__vboHandle);
+			}
+		}
+		rnd.bufferDelete(buffers.toArray(new UObjHandle[buffers.size()]));
+	}
 
 	/**
 	 * Draws the mesh using a shader program.

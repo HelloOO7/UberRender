@@ -1,5 +1,7 @@
 package urender.engine;
 
+import java.util.ArrayList;
+import java.util.List;
 import urender.api.UObjHandle;
 import urender.api.UTextureFormat;
 import urender.api.UTextureType;
@@ -80,6 +82,22 @@ public abstract class UTexture extends UGfxEngineObject {
 	 */
 	public void renameTo(String newName) {
 		this.name = newName;
+	}
+
+	public void delete(RenderingBackend rnd) {
+		if (__handle.isValid(rnd)) {
+			rnd.texDelete(__handle);
+		}
+	}
+	
+	public static void deleteAll(RenderingBackend rnd, Iterable<UTexture> textures) {
+		List<UObjHandle> handles = new ArrayList<>();
+		for (UTexture tex : textures) {
+			if (tex.__handle.isValid(rnd)) {
+				handles.add(tex.__handle);
+			}
+		}
+		rnd.texDelete(handles.toArray(new UObjHandle[handles.size()]));
 	}
 
 	@Override

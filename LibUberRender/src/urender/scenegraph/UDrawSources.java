@@ -54,4 +54,17 @@ public class UDrawSources {
 			program.setup(core, shaderList);
 		}
 	}
+	
+	/**
+	 * Deletes all underlying resources from video memory.
+	 * @param rnd
+	 */
+	public void delete(UGfxRenderer rnd) {
+		RenderingBackend core = rnd.getCore();
+		
+		UMesh.deleteAll(core, meshList);
+		UTexture.deleteAll(core, textureList);
+		UShader.deleteAll(core, shaderList);
+		UShaderProgram.deleteAll(core, shaderProgramList);
+	}
 }

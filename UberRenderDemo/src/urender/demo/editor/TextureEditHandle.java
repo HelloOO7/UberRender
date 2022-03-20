@@ -3,9 +3,11 @@ package urender.demo.editor;
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import urender.api.UTextureFormat;
+import urender.api.UTextureSwizzleChannel;
 import urender.api.UTextureType;
 import urender.engine.UTexture;
 import urender.engine.UTexture2D;
+import urender.g3dio.generic.IIOTextureLoader;
 
 public class TextureEditHandle implements IEditHandle<UTexture> {
 
@@ -25,27 +27,61 @@ public class TextureEditHandle implements IEditHandle<UTexture> {
 	}
 
 	private static BufferedImage decodeTex(UTexture2D tex) {
-		if (tex.format != UTextureFormat.RGBA8) {
-			return null;
+		int bpp = 0;
+		switch (tex.format) {
+			case R8:
+				bpp = 1;
+				break;
+			case RG8:
+				bpp = 2;
+				break;
+			case RGB8:
+				bpp = 3;
+				break;
+			case RGBA8:
+				bpp = 4;
+				break;
+			default:
+				return null;
 		}
 		int width = tex.getWidth();
 		int height = tex.getHeight();
 		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		tex.data.rewind();
+		int stride = IIOTextureLoader.calcRowStride(width, bpp);
+		
+		byte[] temp = new byte[bpp];
+		
 		for (int y = 0; y < height; y++) {
+			tex.data.position(y * stride);
 			for (int x = 0; x < width; x++) {
-				img.setRGB(x, height - y - 1, convColor(tex.data.getInt()));
+				tex.data.get(temp);
+				
+				int r = getUnswizzledComponent(temp, tex.swizzleMask.r);
+				int g = getUnswizzledComponent(temp, tex.swizzleMask.g);
+				int b = getUnswizzledComponent(temp, tex.swizzleMask.b);
+				int a = getUnswizzledComponent(temp, tex.swizzleMask.a);
+				img.setRGB(x, height - y - 1, (a << 24) | (r << 16) | (g << 8) | (b << 0));
 			}
 		}
 		return img;
 	}
-
-	private static int convColor(int color) {
-		int a = (color >> 0) & 0xFF;
-		int b = (color >> 8) & 0xFF;
-		int g = (color >> 16) & 0xFF;
-		int r = (color >> 24) & 0xFF;
-		return (a << 24) | (r << 16) | (g << 8) | (b << 0);
+	
+	private static int getUnswizzledComponent(byte[] rawData, UTextureSwizzleChannel swizzle) {
+		switch (swizzle) {
+			case ONE:
+				return 255;
+			case ZERO:
+				return 0;
+			case R:
+				return rawData[0] & 255;
+			case G:
+				return rawData.length > 1 ? rawData[1] & 255 : 0;
+			case B:
+				return rawData.length > 2 ? rawData[2] & 255 : 0;
+			case A:
+				return rawData.length > 3 ? rawData[3] & 255 : 0;
+		}
+		return 0;
 	}
 
 	@Override

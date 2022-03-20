@@ -74,6 +74,12 @@ public class GLRenderingBackend implements RenderingBackend {
 			gl.glBindRenderbuffer(GL4.GL_RENDERBUFFER, handle);
 		}
 	};
+	private final StateManager currentProgram = new StateManager() {
+		@Override
+		public void bind(int handle) {
+			gl.glUseProgram(handle);
+		}
+	};
 	private final RenderStateTracker blend = new RenderStateTracker(GL4.GL_BLEND);
 	private final RenderStateTracker depthTest = new RenderStateTracker(GL4.GL_DEPTH_TEST);
 	private final RenderStateTracker cullFace = new RenderStateTracker(GL4.GL_CULL_FACE);
@@ -254,7 +260,7 @@ public class GLRenderingBackend implements RenderingBackend {
 
 	@Override
 	public void programUse(UObjHandle program) {
-		gl.glUseProgram(program.getValue(this));
+		currentProgram.bind(program.getValue(this));
 	}
 
 	@Override
@@ -313,6 +319,11 @@ public class GLRenderingBackend implements RenderingBackend {
 	@Override
 	public void programAttachShader(UObjHandle program, UObjHandle shader) {
 		gl.glAttachShader(program.getValue(this), shader.getValue(this));
+	}
+
+	@Override
+	public void programDetachShader(UObjHandle program, UObjHandle shader) {
+		gl.glDetachShader(program.getValue(this), shader.getValue(this));
 	}
 
 	@Override
@@ -626,6 +637,97 @@ public class GLRenderingBackend implements RenderingBackend {
 		gl.glTexParameteriv(api.getTextureType(type), GL4.GL_TEXTURE_SWIZZLE_RGBA, texSwizzleTemp, 0);
 	}
 
+	private int[] makeHandleNames(UObjHandle... handles) {
+		int[] names = new int[handles.length];
+		for (int i = 0; i < handles.length; i++) {
+			names[i] = handles[i].getValue(this);
+		}
+		return names;
+	}
+
+	private void resetHandles(UObjHandle... handles) {
+		for (UObjHandle h : handles) {
+			h.reset(this);
+		}
+	}
+
+	@Override
+	public void texDelete(UObjHandle... textures) {
+		if (textures.length > 0) {
+			int[] names = makeHandleNames(textures);
+			for (StateManager m : currentTextures.values()) {
+				m.resetIfCurrent(names);
+			}
+
+			gl.glDeleteTextures(textures.length, names, 0);
+			resetHandles(textures);
+		}
+	}
+
+	@Override
+	public void texUnitDelete(UObjHandle... texUnits) {
+		//nothing
+		for (UObjHandle h : texUnits) {
+			currentTexUnit.resetIfCurrent(h.getValue(this));
+		}
+		resetHandles(texUnits);
+	}
+
+	@Override
+	public void renderBufferDelete(UObjHandle... rbs) {
+		if (rbs.length > 0) {
+			int[] names = makeHandleNames(rbs);
+			currentRenderBuffer.resetIfCurrent(names);
+			gl.glDeleteRenderbuffers(rbs.length, names, 0);
+			resetHandles(rbs);
+		}
+	}
+
+	@Override
+	public void framebufferDelete(UObjHandle... fbs) {
+		if (fbs.length > 0) {
+			int[] names = makeHandleNames(fbs);
+			currentFramebuffer.resetIfCurrent(names);
+			gl.glDeleteFramebuffers(fbs.length, names, 0);
+			resetHandles(fbs);
+		}
+	}
+
+	@Override
+	public void drawBufferDelete(UObjHandle... drawBuffers) {
+		//attachment does not need deleting
+		resetHandles(drawBuffers);
+	}
+
+	@Override
+	public void bufferDelete(UObjHandle... buffers) {
+		if (buffers.length > 0) {
+			int[] names = makeHandleNames(buffers);
+			currentIBO.resetIfCurrent(names);
+			currentVBO.resetIfCurrent(names);
+			gl.glDeleteBuffers(buffers.length, names, 0);
+			resetHandles(buffers);
+		}
+	}
+
+	@Override
+	public void shaderDelete(UObjHandle... shaders) {
+		for (UObjHandle h : shaders) {
+			gl.glDeleteShader(h.getValue(this));
+		}
+		resetHandles(shaders);
+	}
+
+	@Override
+	public void programDelete(UObjHandle... programs) {
+		for (UObjHandle p : programs) {
+			int val = p.getValue(this);
+			currentProgram.resetIfCurrent(val);
+			gl.glDeleteProgram(p.getValue(this));
+		}
+		resetHandles(programs);
+	}
+
 	private class RenderStateTracker {
 
 		private int glEnum;
@@ -636,7 +738,7 @@ public class GLRenderingBackend implements RenderingBackend {
 		public RenderStateTracker(int glEnum) {
 			this.glEnum = glEnum;
 		}
-		
+
 		public void reset() {
 			used = false;
 		}
@@ -663,13 +765,27 @@ public class GLRenderingBackend implements RenderingBackend {
 		private int currentHandle = -1;
 
 		public void setCurrent(int value) {
-			currentHandle = value;
-			bind(value);
+			if (currentHandle != value) {
+				currentHandle = value;
+				if (value != -1) {
+					bind(value);
+				}
+			}
 		}
 
 		public void setCurrent(UObjHandle handle) {
-			if (!handle.isCurrent(GLRenderingBackend.this, currentHandle)) {
-				setCurrent(handle.getValue(GLRenderingBackend.this));
+			setCurrent(handle.getValue(GLRenderingBackend.this));
+		}
+
+		public void resetIfCurrent(int value) {
+			if (currentHandle == value) {
+				reset();
+			}
+		}
+		
+		public void resetIfCurrent(int... values) {
+			for (int v : values) {
+				resetIfCurrent(v);
 			}
 		}
 

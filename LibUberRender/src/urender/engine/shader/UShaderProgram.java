@@ -1,5 +1,6 @@
 package urender.engine.shader;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -198,14 +199,33 @@ public class UShaderProgram extends UGfxEngineObject {
 
 		if (vert != null && frag != null) {
 			//ensure that these methods are called to reset the flags
+			//could also use single pipe | OR operator, but that might confuse a lot of programmers
 			boolean needsVertRelink = vert.needsProgramRelink(this);
 			boolean needsFragRelink = frag.needsProgramRelink(this);
 			if (__program.getAndResetForceUpload(rnd) || needsVertRelink || needsFragRelink) {
 				rnd.programAttachShader(__program, vert.__shObj);
 				rnd.programAttachShader(__program, frag.__shObj);
 				rnd.programLink(__program);
+				rnd.programDetachShader(__program, vert.__shObj);
+				rnd.programDetachShader(__program, frag.__shObj);
 			}
 		}
+	}
+	
+	public void delete(RenderingBackend rnd) {
+		if (__program.isValid(rnd)) {
+			rnd.programDelete(__program);
+		}
+	}
+	
+	public static void deleteAll(RenderingBackend rnd, Iterable<UShaderProgram> programs) {
+		List<UObjHandle> handles = new ArrayList<>();
+		for (UShaderProgram shader : programs) {
+			if (shader.__program.isValid(rnd)) {
+				handles.add(shader.__program);
+			}
+		}
+		rnd.programDelete(handles.toArray(new UObjHandle[handles.size()]));
 	}
 
 	/**

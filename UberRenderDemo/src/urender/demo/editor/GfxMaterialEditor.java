@@ -1,8 +1,11 @@
 package urender.demo.editor;
 
+import urender.demo.DemoUIUtility;
 import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -22,6 +25,7 @@ import urender.common.fs.FSUtil;
 import urender.engine.UShadingMethod;
 import urender.engine.UGfxObject;
 import urender.engine.UMaterial;
+import urender.engine.UMesh;
 import urender.engine.UTexture;
 import urender.engine.UTextureMapper;
 import urender.engine.shader.UShader;
@@ -97,17 +101,9 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 		addRemoveShader.bind(shaderList, shaderListModel, new AddRemoveItemButtons.SingleHandler<UShader>() {
 			@Override
 			public UShader addSingle() {
-				File shaderFile = EditorUIUtility.callFileSelect(GfxMaterialEditor.this, false, "GLSL Shader | *.vsh, *.fsh", ".vsh", ".fsh");
+				File shaderFile = callShaderSelect();
 				if (shaderFile != null) {
-					try {
-						return new UShader(
-							shaderFile.getName(),
-							shaderFile.getName().endsWith(".fsh") ? UShaderType.FRAGMENT : UShaderType.VERTEX,
-							new String(Files.readAllBytes(shaderFile.toPath()), StandardCharsets.UTF_8)
-						);
-					} catch (IOException ex) {
-						Logger.getLogger(GfxMaterialEditor.class.getName()).log(Level.SEVERE, null, ex);
-					}
+					return doImportShader(shaderFile);
 				}
 				return null;
 			}
@@ -117,7 +113,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 				String name = value.getName();
 				for (ShaderProgramEditHandle pe : programListModel) {
 					if (Objects.equals(pe.program.getFshName(), name) || Objects.equals(pe.program.getVshName(), name)) {
-						EditorUIUtility.showInfoMessage(GfxMaterialEditor.this, "Shader in use", "Please detach this shader from any programs in order to remove it.");
+						DemoUIUtility.showInfoMessage(GfxMaterialEditor.this, "Shader in use", "Please detach this shader from any programs in order to remove it.");
 						return false;
 					}
 				}
@@ -142,7 +138,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 		addRemoveProgram.bind(shaderProgramList, programListModel, new AddRemoveItemButtons.SingleHandler<UShaderProgram>() {
 			@Override
 			public UShaderProgram addSingle() {
-				String name = EditorUIUtility.callNameInput(GfxMaterialEditor.this, "Name input", "Enter a name for the shader program");
+				String name = DemoUIUtility.callNameInput(GfxMaterialEditor.this, "Name input", "Enter a name for the shader program");
 				if (name != null) {
 					UShaderProgram program = new UShaderProgram(name, null, null);
 					return program;
@@ -154,7 +150,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 			public boolean remove(UShaderProgram value) {
 				for (MaterialEditHandle mat : materialListModel) {
 					if (Objects.equals(mat.material.getShaderProgramName(), value.getName())) {
-						EditorUIUtility.showInfoMessage(GfxMaterialEditor.this, "Shader program in use", "Please detach this shader program from any materials in order to remove it.");
+						DemoUIUtility.showInfoMessage(GfxMaterialEditor.this, "Shader program in use", "Please detach this shader program from any materials in order to remove it.");
 						return false;
 					}
 				}
@@ -189,7 +185,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 				if (uniformType == JOptionPane.CLOSED_OPTION) {
 					return null;
 				} else {
-					String uniformName = EditorUIUtility.callNameInput(GfxMaterialEditor.this, "New shader parameter", "Enter a name for the uniform");
+					String uniformName = DemoUIUtility.callNameInput(GfxMaterialEditor.this, "New shader parameter", "Enter a name for the uniform");
 
 					if (uniformName != null) {
 						switch (options[uniformType]) {
@@ -303,7 +299,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 					for (MaterialEditHandle mat : materialListModel) {
 						for (UTextureMapper mapper : mat.material.getTextureMappers()) {
 							if (Objects.equals(mapper.getTextureName(), value.getName())) {
-								EditorUIUtility.showInfoMessage(GfxMaterialEditor.this, "Texture in use", "Please detach this texture from any texture mappers in order to remove it.");
+								DemoUIUtility.showInfoMessage(GfxMaterialEditor.this, "Texture in use", "Please detach this texture from any texture mappers in order to remove it.");
 								return false;
 							}
 						}
@@ -386,7 +382,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 			addRemoveTextureMapper.bind(textureMapperBox, handle.texMapperListModel, new AddRemoveItemButtons.SingleHandler<UTextureMapper>() {
 				@Override
 				public UTextureMapper addSingle() {
-					String name = EditorUIUtility.callNameInput(GfxMaterialEditor.this, "New texture mapper", "Enter the name for the sampler uniform");
+					String name = DemoUIUtility.callNameInput(GfxMaterialEditor.this, "New texture mapper", "Enter the name for the sampler uniform");
 					if (name != null) {
 						UTextureMapper mapper = new UTextureMapper();
 						mapper.setShaderVariableName(name);
@@ -410,7 +406,11 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 	}
 
 	private List<File> callTextureSelect(boolean multiple) {
-		return EditorUIUtility.callFileSelect(GfxMaterialEditor.this, false, multiple, "Image texture | *.png, *.jpg", "*.dds", ".png", ".jpg", ".dds");
+		return DemoUIUtility.callFileSelect(GfxMaterialEditor.this, false, multiple, "Image texture | *.png, *.jpg", "*.dds", ".png", ".jpg", ".dds");
+	}
+
+	private File callShaderSelect() {
+		return DemoUIUtility.callFileSelect(GfxMaterialEditor.this, false, "GLSL Shader | *.vsh, *.fsh", ".vsh", ".fsh");
 	}
 
 	private UTexture doImportTexture(File f) {
@@ -423,12 +423,17 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 		return tex;
 	}
 
-	private File getSelectedGFXFile(boolean save) {
-		return EditorUIUtility.callFileSelect(this, save, "UberRender Graphics Resource | *.gfx", ".gfx");
+	private UShader doImportShader(File shaderFile) {
+		return new UShader(
+			shaderFile.getName(),
+			shaderFile.getName().endsWith(".fsh") ? UShaderType.FRAGMENT : UShaderType.VERTEX,
+			new String(FSUtil.readFileToBytes(shaderFile), StandardCharsets.UTF_8)
+		);
 	}
 
 	/**
-	 * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this code. The content of this method is always regenerated by the Form Editor.
+	 * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this
+	 * code. The content of this method is always regenerated by the Form Editor.
 	 */
 	@SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -481,6 +486,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
         shaderListSP = new javax.swing.JScrollPane();
         shaderList = new javax.swing.JList<>();
         addRemoveShader = new urender.demo.editor.AddRemoveItemButtons();
+        btnShaderReplace = new javax.swing.JButton();
         shaderEditor = new javax.swing.JPanel();
         shaderEditorAreaSP = new javax.swing.JScrollPane();
         shaderEditorArea = new javax.swing.JTextArea();
@@ -502,6 +508,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
         btnReplaceMaterials = new javax.swing.JMenuItem();
         btnDeferredToForward = new javax.swing.JMenuItem();
         btnForwardToDeferred = new javax.swing.JMenuItem();
+        btnScaleGeometry = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("uGFX MaterialEditor");
@@ -841,6 +848,13 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 
         shaderListSP.setViewportView(shaderList);
 
+        btnShaderReplace.setText("Replace");
+        btnShaderReplace.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnShaderReplaceActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout shaderSelectPanelLayout = new javax.swing.GroupLayout(shaderSelectPanel);
         shaderSelectPanel.setLayout(shaderSelectPanelLayout);
         shaderSelectPanelLayout.setHorizontalGroup(
@@ -851,7 +865,8 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
                     .addComponent(shaderListSP, javax.swing.GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE)
                     .addGroup(shaderSelectPanelLayout.createSequentialGroup()
                         .addComponent(addRemoveShader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnShaderReplace)))
                 .addContainerGap())
         );
         shaderSelectPanelLayout.setVerticalGroup(
@@ -860,7 +875,9 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(shaderListSP, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(addRemoveShader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(shaderSelectPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(addRemoveShader, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnShaderReplace))
                 .addContainerGap())
         );
 
@@ -877,7 +894,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
             shaderEditorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(shaderEditorLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(shaderEditorAreaSP, javax.swing.GroupLayout.DEFAULT_SIZE, 367, Short.MAX_VALUE)
+                .addComponent(shaderEditorAreaSP, javax.swing.GroupLayout.DEFAULT_SIZE, 391, Short.MAX_VALUE)
                 .addContainerGap())
         );
         shaderEditorLayout.setVerticalGroup(
@@ -1049,6 +1066,14 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
         });
         editMenu.add(btnForwardToDeferred);
 
+        btnScaleGeometry.setText("Scale geometry");
+        btnScaleGeometry.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnScaleGeometryActionPerformed(evt);
+            }
+        });
+        editMenu.add(btnScaleGeometry);
+
         menuBar.add(editMenu);
 
         setJMenuBar(menuBar);
@@ -1068,7 +1093,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenActionPerformed
-		File f = getSelectedGFXFile(false);
+		File f = DemoUIUtility.callGFXFileSelect(this, false);
 		if (f != null) {
 			loadResource(f);
 		}
@@ -1076,7 +1101,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
 		if (savedata_File == null) {
-			savedata_File = getSelectedGFXFile(true);
+			savedata_File = DemoUIUtility.callGFXFileSelect(this, true);
 		}
 		if (savedata_File != null) {
 			IEditHandle.saveAll(shaderListModel);
@@ -1099,7 +1124,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
     }//GEN-LAST:event_shaderProgramSelectActionPerformed
 
     private void btnOpenOBJActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenOBJActionPerformed
-		File objFile = EditorUIUtility.callFileSelect(this, false, "Wavefront OBJ | *.obj", ".obj");
+		File objFile = DemoUIUtility.callFileSelect(this, false, "Wavefront OBJ | *.obj", ".obj");
 		if (objFile != null) {
 			loadSceneNode(OBJModelLoader.createOBJModelSceneNode(objFile));
 			savedata_File = null;
@@ -1155,8 +1180,10 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 			hnd.texMapperListModel.add(0, alb);
 		}
 		baseTexName = alb.getTextureName();
-		if (baseTexName.endsWith("_Alb") || baseTexName.endsWith("_Alb2")) {
-			baseTexName = baseTexName.substring(0, baseTexName.indexOf("_Alb"));
+		if (baseTexName != null) {
+			if (baseTexName.endsWith("_Alb") || baseTexName.endsWith("_Alb2")) {
+				baseTexName = baseTexName.substring(0, baseTexName.indexOf("_Alb"));
+			}
 		}
 		if (normalMap) {
 			UTextureMapper nrm;
@@ -1263,7 +1290,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 			UMaterial mat = hnd.material;
 			if (mat.getTextureMapperCount() != 0) {
 				String albTexName = mat.getTextureMapper(0).getTextureName();
-				if (albTexName.endsWith("_Alb") || albTexName.endsWith("_Alb2")) {
+				if (albTexName != null && (albTexName.endsWith("_Alb") || albTexName.endsWith("_Alb2"))) {
 					String texNameBase = albTexName.substring(0, albTexName.indexOf("_Alb"));
 					makeTurboBase(
 						hnd,
@@ -1301,7 +1328,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 	}
 
     private void btnReplaceMaterialsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnReplaceMaterialsActionPerformed
-		File otherFile = getSelectedGFXFile(false);
+		File otherFile = DemoUIUtility.callGFXFileSelect(this, false);
 
 		if (otherFile != null) {
 			USceneNode replacement = new USceneNode();
@@ -1326,11 +1353,74 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
     }//GEN-LAST:event_btnDeferredToForwardActionPerformed
 
     private void btnForwardToDeferredActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnForwardToDeferredActionPerformed
-        for (MaterialEditHandle mat : materialListModel) {
+		for (MaterialEditHandle mat : materialListModel) {
 			mat.shadingMethodModel.setSelectedItem(UShadingMethod.DEFERRED);
 			mat.save();
 		}
     }//GEN-LAST:event_btnForwardToDeferredActionPerformed
+
+    private void btnScaleGeometryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScaleGeometryActionPerformed
+		if (savedata_SceneNode != null) {
+			float scale = 0f;
+
+			while (scale == 0f) {
+				String input = JOptionPane.showInputDialog(this, "Enter a decimal scale", "Number input", JOptionPane.INFORMATION_MESSAGE);
+
+				if (input == null) {
+					break;
+				}
+
+				try {
+					scale = Float.parseFloat(input);
+				} catch (Exception ex) {
+					DemoUIUtility.showErrorMessage(this, "Not a number", "Please enter a valid decimal number.");
+				}
+
+				if (scale == 0f) {
+					DemoUIUtility.showErrorMessage(this, "Invalid scale factor", "Scale can not be zero.");
+				}
+			}
+
+			if (scale != 0f) {
+				for (UMesh mesh : savedata_SceneNode.meshes) {
+					ByteBuffer bbuf = mesh.getVBO();
+					int vcount = mesh.getVertexCount();
+					int stride = mesh.getOneVertexSize();
+
+					bbuf.order(ByteOrder.LITTLE_ENDIAN);
+
+					for (int i = 0; i < vcount; i++) {
+						//assume position attribute as first
+						bbuf.position(stride * i);
+						for (int comp = 0; comp < 3; comp++) {
+							bbuf.mark();
+							float v = bbuf.getFloat();
+							bbuf.reset();
+							bbuf.putFloat(v * scale);
+						}
+					}
+				}
+			}
+		}
+    }//GEN-LAST:event_btnScaleGeometryActionPerformed
+
+    private void btnShaderReplaceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShaderReplaceActionPerformed
+		ShaderEditHandle hnd = shaderList.getSelectedValue();
+		if (hnd != null) {
+			File shaderFile = callShaderSelect();
+			if (shaderFile != null) {
+				UShader sha = doImportShader(shaderFile);
+
+				if (sha != null) {
+					String shaderName = hnd.shader.getName();
+					sha.renameTo(shaderName);
+					int idx = shaderListModel.remove(hnd.shader);
+					shaderListModel.add(idx, sha);
+					shaderList.setSelectedIndex(idx);
+				}
+			}
+		}
+    }//GEN-LAST:event_btnShaderReplaceActionPerformed
 
 	/**
 	 * @param args the command line arguments
@@ -1363,6 +1453,8 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
     private javax.swing.JMenuItem btnOpenOBJ;
     private javax.swing.JMenuItem btnReplaceMaterials;
     private javax.swing.JMenuItem btnSave;
+    private javax.swing.JMenuItem btnScaleGeometry;
+    private javax.swing.JButton btnShaderReplace;
     private javax.swing.JButton btnTexReplace;
     private javax.swing.JCheckBox btnTurboEnableEmi;
     private javax.swing.JCheckBox btnTurboEnableLightBake;

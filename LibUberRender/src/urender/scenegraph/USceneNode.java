@@ -60,17 +60,17 @@ public class USceneNode {
 	 * @param rnd Rendering engine.
 	 */
 	public void drawHeadless(UGfxRenderer rnd) {
-		URenderQueue.URenderQueueNodeState nodeState = new URenderQueue.URenderQueueNodeState(this);
+		URenderQueueNodeState nodeState = new URenderQueueNodeState(this);
 		nodeState.drawSources.setup(rnd);
-		List<URenderQueue.URenderQueueMeshState> meshStates = new ArrayList<>();
+		List<URenderQueueMeshState> meshStates = new ArrayList<>();
 		for (UModel mdl : models) {
 			for (UModel.UMeshInstance meshInst : mdl.meshes) {
-				URenderQueue.URenderQueueMeshState meshState = new URenderQueue.URenderQueueMeshState(nodeState, meshInst);
+				URenderQueueMeshState meshState = new URenderQueueMeshState(nodeState, meshInst);
 				meshStates.add(meshState);
 			}
 		}
 		Collections.sort(meshStates);
-		for (URenderQueue.URenderQueueMeshState ms : meshStates) {
+		for (URenderQueueMeshState ms : meshStates) {
 			ms.draw(rnd);
 		}
 	}
@@ -82,5 +82,29 @@ public class USceneNode {
 	 */
 	public UDrawSources getDrawSources() {
 		return new UDrawSources(meshes, materials, shaders, programs, uniforms, textures);
+	}
+
+	/**
+	 * Deletes all resources associated with this node from video memory.
+	 *
+	 * @param rnd
+	 */
+	public void delete(UGfxRenderer rnd) {
+		getDrawSources().delete(rnd);
+	}
+
+	/**
+	 * Deletes all resources associated with this node from video memory, and does the same for all of the
+	 * node's children.
+	 *
+	 * @param rnd
+	 */
+	public void deleteAll(UGfxRenderer rnd) {
+		delete(rnd);
+		if (parentRelation != null) {
+			for (USceneNode child : parentRelation.getChildren()) {
+				child.deleteAll(rnd);
+			}
+		}
 	}
 }

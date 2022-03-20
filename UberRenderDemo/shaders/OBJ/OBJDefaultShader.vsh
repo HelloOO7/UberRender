@@ -13,14 +13,10 @@ out vec3 FS_Normal;
 out vec3 FS_View;
 out vec2 FS_Texcoord0;
 
-uniform float time;
-uniform float waveIntensity;
-uniform float waveSpeed;
-
 void main(void) {
-	vec4 outPosition = UBR_ModelMatrix * vec4(a_Position + vec3(sin(a_Position.x + (time * waveSpeed) / 1000.0) * waveIntensity), 1.0);
-	FS_View = outPosition.xyz; 
-	outPosition = UBR_ProjectionMatrix * UBR_ViewMatrix * outPosition;	
+	vec4 outPosition = UBR_ModelMatrix * vec4(a_Position, 1.0);
+ 	FS_View = outPosition.xyz; 
+	outPosition = UBR_ProjectionMatrix * UBR_ViewMatrix * outPosition;
 	FS_Normal = UBR_NormalMatrix * a_Normal;
 	FS_Texcoord0 = a_Texcoord0;
 	gl_Position = outPosition;

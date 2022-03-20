@@ -38,6 +38,8 @@ import urender.scenegraph.USceneNode;
  */
 public class OBJModelLoader {
 
+	public static boolean DEF_DEBUG_NO_TEXTURE_LOAD = false;
+
 	private static final String OBJ_DEFAULT_SHADER_NAME = "OBJDefaultShader";
 	private static final String OBJ_DEFAULT_SHADER_VERT_NAME = "OBJDefaultShader_V";
 	private static final String OBJ_DEFAULT_SHADER_FRAG_NAME = "OBJDefaultShader_F";
@@ -90,7 +92,11 @@ public class OBJModelLoader {
 		+ "}";
 
 	private static void loadMTL(OBJFilesystemAccessor fs, String mtlFileName, USceneNode dest) {
-		Scanner s = new Scanner(fs.getStream(mtlFileName));
+		InputStream strm = fs.getStream(mtlFileName);
+		if (strm == null) {
+			throw new RuntimeException("Could not load MTL file " + mtlFileName + "!");
+		}
+		Scanner s = new Scanner(strm);
 
 		UMaterialBuilder matBuilder = new UMaterialBuilder();
 		String nowMatName = null;
@@ -124,21 +130,23 @@ public class OBJModelLoader {
 						String textureName = FSUtil.getFileNameWithoutExtension(texturePath);
 						mapperBld.setTextureName(textureName);
 						if (!loadedTextureNames.contains(textureName)) {
-							File fileTest = new File(texturePath);
-							if (fileTest.exists()) {
-								try {
-									FileInputStream in = new FileInputStream(fileTest);
-									dest.textures.add(IIOTextureLoader.createIIOTexture(in, textureName));
-									in.close();
-								} catch (IOException ex) {
-									Logger.getLogger(OBJModelLoader.class.getName()).log(Level.SEVERE, null, ex);
-								}
-							} else {
-								InputStream texStream = fs.getStream(texturePath);
-								if (texStream != null) {
-									dest.textures.add(IIOTextureLoader.createIIOTexture(texStream, textureName));
+							if (!DEF_DEBUG_NO_TEXTURE_LOAD) {
+								File fileTest = new File(texturePath);
+								if (fileTest.exists()) {
+									try {
+										FileInputStream in = new FileInputStream(fileTest);
+										dest.textures.add(IIOTextureLoader.createIIOTexture(in, textureName));
+										in.close();
+									} catch (IOException ex) {
+										Logger.getLogger(OBJModelLoader.class.getName()).log(Level.SEVERE, null, ex);
+									}
 								} else {
-									System.err.println("Could not load texture " + texturePath);
+									InputStream texStream = fs.getStream(texturePath);
+									if (texStream != null) {
+										dest.textures.add(IIOTextureLoader.createIIOTexture(texStream, textureName));
+									} else {
+										System.err.println("Could not load texture " + texturePath);
+									}
 								}
 							}
 							loadedTextureNames.add(textureName);
@@ -195,7 +203,7 @@ public class OBJModelLoader {
 				switch (commands[0]) {
 					case "mtllib":
 						//Set material file
-						loadMTL(fs, commands[1], node);
+						loadMTL(fs, line.substring(line.indexOf(' ') + 1), node);
 						break;
 					case "o":
 					case "g":
@@ -323,8 +331,7 @@ public class OBJModelLoader {
 			boolean hasNormal = false;
 			boolean[] hasTexcoord = new boolean[2];
 
-			System.out.println("Converting " + faces.size() + " faces...");
-
+			//System.out.println("Converting " + faces.size() + " faces...");
 			for (OBJFacepoint vp : faces) {
 				//System.out.println("vp " + vp.posIndex + "//" + vp.norIndex);
 				vtx.position = positions.get(vp.posIndex);
@@ -356,7 +363,7 @@ public class OBJModelLoader {
 				indices.add(index);
 			}
 
-			UDataType indexBufferFormat = indices.size() > 0xFFFF ? UDataType.INT32 : indices.size() > 0xFF ? UDataType.INT16 : UDataType.INT8;
+			UDataType indexBufferFormat = indices.size() > 0xFFFF ? UDataType.UINT32 : indices.size() > 0xFF ? UDataType.UINT16 : UDataType.UINT8;
 
 			ByteBuffer indexBuffer = ByteBuffer.allocateDirect(indexBufferFormat.sizeof * indices.size());
 			indexBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -461,8 +468,7 @@ public class OBJModelLoader {
 
 			HashSet<OBJVertex> convVerts = new HashSet<>();
 
-			System.out.println("About to convert " + verticesUnindexed.size() + " vertices.");
-
+			//System.out.println("About to convert " + verticesUnindexed.size() + " vertices.");
 			for (int ti = 0; ti < verticesUnindexed.size(); ti += 3) {
 				triVertices[0] = verticesUnindexed.get(ti);
 				triVertices[1] = verticesUnindexed.get(ti + 1);
@@ -530,13 +536,13 @@ public class OBJModelLoader {
 
 	private static void writeIBO(UDataType type, ByteBuffer buf, int value) {
 		switch (type) {
-			case INT8:
+			case UINT8:
 				buf.put((byte) value);
 				break;
-			case INT16:
+			case UINT16:
 				buf.putShort((short) value);
 				break;
-			case INT32:
+			case UINT32:
 				buf.putInt(value);
 				break;
 		}

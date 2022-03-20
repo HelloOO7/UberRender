@@ -21,6 +21,17 @@ public class UObjHandle {
 	}
 
 	/**
+	 * Discards saved handles for a rendering backend.
+	 *
+	 * @param rnd A rendering backend core.
+	 */
+	public void reset(RenderingBackend rnd) {
+		Integer key = rnd.getIdent().hashCode();
+		values.remove(key);
+		forceUpload.remove(key);
+	}
+
+	/**
 	 * Sets a flag that notifies that a rendering engine should reupload any data used by the handle.
 	 *
 	 * @param backend A rendering backend core.
