@@ -2,6 +2,8 @@
 
 UberRender, or URender in short, is a graphics API abstraction library, rendering engine and scenegraph package. The primary goal of URender is to achieve performance-competitive multi-layer blended transparency rendering using purely deferred shading techniques, however, it allows for using forward shading as well as combining the two methods freely.
 
+The associated thesis, "Advanced rendering techniques for multi-layer scenes", can be found at https://github.com/HelloOO7/UberRender/raw/master/Docs/Publish/AdvancedMultiLayerRendering_GJK2022.pdf.
+
 ## URender API
 
 The URender API package is a Java-oriented graphics API abstraction built upon OpenGL 4.0, but designed with other potential versions or backends in mind. The rendering engine uses this API exclusively.
