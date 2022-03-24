@@ -18,6 +18,8 @@ import urender.engine.UTexture2DBuilder;
 
 /**
  * DirectDraw Surface texture resource loader.
+ * 
+ * This is VERY barebones and currently is only for some experimental heightmap textures.
  */
 public class DDSTextureLoader {
 

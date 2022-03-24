@@ -27,6 +27,14 @@ public class DemoUIUtility {
 		return callFileSelect(parent, save, "UberRender Graphics Resource | *.gfx", ".gfx");
 	}
 
+	public static List<File> callTextureSelect(Component parent, boolean multiple) {
+		return DemoUIUtility.callFileSelect(parent, false, multiple, "Image texture | *.png, *.jpg", "*.dds", ".png", ".jpg", ".dds");
+	}
+
+	public static File callShaderSelect(Component parent) {
+		return callFileSelect(parent, false, "GLSL Shader | *.vsh, *.fsh", ".vsh", ".fsh");
+	}
+
 	public static File callFileSelect(Component parent) {
 		return callFileSelect(parent, false, null, (String[]) null);
 	}

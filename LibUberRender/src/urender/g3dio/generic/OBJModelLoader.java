@@ -209,6 +209,7 @@ public class OBJModelLoader {
 					case "g":
 						if (setupMesh(mesh, positions, normals, texcoords, faces)) {
 							node.meshes.add(mesh.build());
+							warnNullMtl(meshInst);
 							model.meshes.add(meshInst);
 
 							mesh.reset();
@@ -296,6 +297,7 @@ public class OBJModelLoader {
 		}
 		if (setupMesh(mesh, positions, normals, texcoords, faces)) {
 			node.meshes.add(mesh.build());
+			warnNullMtl(meshInst);
 			model.meshes.add(meshInst);
 		}
 		node.models.add(model);
@@ -307,6 +309,12 @@ public class OBJModelLoader {
 
 		scanner.close();
 		return node;
+	}
+
+	private static void warnNullMtl(UModel.UMeshInstance meshInst) {
+		if (meshInst.materialName == null) {
+			System.out.println("WARN: Null material on mesh " + meshInst.meshName);
+		}
 	}
 
 	private static Vector3f parseVector3(String[] commands) {
@@ -322,7 +330,7 @@ public class OBJModelLoader {
 
 	private static boolean setupMesh(UMeshBuilder mesh, List<Vector3f> positions, List<Vector3f> normals, List<Vector2f>[] texcoords, List<OBJFacepoint> faces) {
 		mesh.setPrimitiveType(UPrimitiveType.TRIS);
-		if (!positions.isEmpty()) {
+		if (!positions.isEmpty() && !faces.isEmpty()) {
 			OBJVertex vtx = new OBJVertex();
 			List<OBJVertex> vertices = new ArrayList<>();
 			List<OBJVertex> verticesUnindexed = new ArrayList<>();

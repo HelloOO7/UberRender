@@ -11,7 +11,7 @@ import urender.scenegraph.io.UScenegraphGfxResourceLoader;
 public class GfxFormatPerfTest {
 
 	public static void main(String[] args) {
-		//testWavefront(10);
+		testWavefront(10);
 		testGfx(10);
 	}
 

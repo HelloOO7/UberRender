@@ -46,6 +46,9 @@ public class URenderQueueMeshState implements Comparable<URenderQueueMeshState> 
 	 * @return
 	 */
 	public int getDrawPriority() {
+		if (mat == null) {
+			return -1;
+		}
 		return mat.getDrawLayer().priority;
 	}
 
@@ -84,7 +87,7 @@ public class URenderQueueMeshState implements Comparable<URenderQueueMeshState> 
 		} else {
 			if (mesh == null) {
 				System.err.println("Could not find mesh " + meshInstance.meshName);
-			} else if (mat == null) {
+			} else if (mat == null && meshInstance.materialName != null) {
 				System.err.println("Could not find material " + meshInstance.materialName);
 			}
 		}

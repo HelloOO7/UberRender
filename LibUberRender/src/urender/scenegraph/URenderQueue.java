@@ -77,8 +77,10 @@ public class URenderQueue {
 		int max = -1;
 		for (URenderQueueMeshState s : queue) {
 			int p;
-			if ((p = s.mat.getDrawLayer().priority) > max) {
-				max = p;
+			if (s.mat != null) {
+				if ((p = s.mat.getDrawLayer().priority) > max) {
+					max = p;
+				}
 			}
 		}
 		return max;

@@ -3,11 +3,7 @@ package urender.demo.editor;
 import urender.demo.DemoUIUtility;
 import java.awt.Component;
 import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -15,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -22,20 +19,8 @@ import javax.swing.text.PlainDocument;
 import org.joml.Vector4f;
 import urender.api.UShaderType;
 import urender.common.fs.FSUtil;
-import urender.engine.UShadingMethod;
-import urender.engine.UGfxObject;
-import urender.engine.UMaterial;
-import urender.engine.UMesh;
-import urender.engine.UTexture;
-import urender.engine.UTextureMapper;
-import urender.engine.shader.UShader;
-import urender.engine.shader.UShaderProgram;
-import urender.engine.shader.UUniform;
-import urender.engine.shader.UUniformFloat;
-import urender.engine.shader.UUniformInt;
-import urender.engine.shader.UUniformVector2;
-import urender.engine.shader.UUniformVector3;
-import urender.engine.shader.UUniformVector4;
+import urender.engine.*;
+import urender.engine.shader.*;
 import urender.g3dio.generic.DDSTextureLoader;
 import urender.g3dio.generic.IIOTextureLoader;
 import urender.g3dio.generic.OBJModelLoader;
@@ -89,23 +74,14 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 		shaderList.setModel(shaderListModel);
 		shaderList.addListSelectionListener(((e) -> {
 			if (!e.getValueIsAdjusting()) {
-				ShaderEditHandle handle = shaderList.getSelectedValue();
-				if (handle != null) {
-					shaderEditorArea.setDocument(handle.document);
-				} else {
-					shaderEditorArea.setDocument(new PlainDocument());
-				}
+				loadShader();
 			}
 		}));
 
 		addRemoveShader.bind(shaderList, shaderListModel, new AddRemoveItemButtons.SingleHandler<UShader>() {
 			@Override
 			public UShader addSingle() {
-				File shaderFile = callShaderSelect();
-				if (shaderFile != null) {
-					return doImportShader(shaderFile);
-				}
-				return null;
+				return addShader();
 			}
 
 			@Override
@@ -124,26 +100,14 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 		shaderProgramList.setModel(programListModel);
 		shaderProgramList.addListSelectionListener(((e) -> {
 			if (!e.getValueIsAdjusting()) {
-				ShaderProgramEditHandle handle = shaderProgramList.getSelectedValue();
-				if (handle != null) {
-					shaderSelectF.setModel(handle.shaderSelectF);
-					shaderSelectV.setModel(handle.shaderSelectV);
-				} else {
-					shaderSelectF.setModel(new DefaultComboBoxModel<>());
-					shaderSelectV.setModel(new DefaultComboBoxModel<>());
-				}
+				loadShaderProgram();
 			}
 		}));
 
 		addRemoveProgram.bind(shaderProgramList, programListModel, new AddRemoveItemButtons.SingleHandler<UShaderProgram>() {
 			@Override
 			public UShaderProgram addSingle() {
-				String name = DemoUIUtility.callNameInput(GfxMaterialEditor.this, "Name input", "Enter a name for the shader program");
-				if (name != null) {
-					UShaderProgram program = new UShaderProgram(name, null, null);
-					return program;
-				}
-				return null;
+				return addShaderProgram();
 			}
 
 			@Override
@@ -161,7 +125,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 		materialList.setModel(materialListModel);
 		materialList.addListSelectionListener(((e) -> {
 			if (!e.getValueIsAdjusting()) {
-				reloadMaterial();
+				loadMaterial();
 			}
 		}));
 
@@ -170,39 +134,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 		addRemoveShaderParam.bind(uniformList, uniformListModel, new AddRemoveItemButtons.SingleHandler<UUniform>() {
 			@Override
 			public UUniform addSingle() {
-				String[] options = new String[]{"Float", "Integer", "Vector2", "Vector3", "Vector4"};
-
-				int uniformType = JOptionPane.showOptionDialog(
-					GfxMaterialEditor.this,
-					"Select the uniform type",
-					"New shader parameter",
-					JOptionPane.OK_CANCEL_OPTION,
-					JOptionPane.QUESTION_MESSAGE,
-					null,
-					options,
-					"Float"
-				);
-				if (uniformType == JOptionPane.CLOSED_OPTION) {
-					return null;
-				} else {
-					String uniformName = DemoUIUtility.callNameInput(GfxMaterialEditor.this, "New shader parameter", "Enter a name for the uniform");
-
-					if (uniformName != null) {
-						switch (options[uniformType]) {
-							case "Float":
-								return new UUniformFloat(uniformName);
-							case "Integer":
-								return new UUniformInt(uniformName);
-							case "Vector2":
-								return new UUniformVector2(uniformName);
-							case "Vector3":
-								return new UUniformVector3(uniformName);
-							case "Vector4":
-								return new UUniformVector4(uniformName);
-						}
-					}
-				}
-				return null;
+				return addUniform();
 			}
 
 			@Override
@@ -213,84 +145,26 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 
 		uniformList.addListSelectionListener(((e) -> {
 			if (!e.getValueIsAdjusting()) {
-				UniformEditHandle hnd = uniformList.getSelectedValue();
-				if (hnd != null) {
-					uniformEditorHolder.setViewportView((Component) hnd.getEditor());
-				} else {
-					uniformEditorHolder.setViewportView(null);
-				}
+				loadUniform();
 			}
 		}));
 
 		textureMapperBox.addActionListener((e) -> {
-			TextureMapperEditHandle h = (TextureMapperEditHandle) textureMapperBox.getSelectedItem();
-			if (h != null) {
-				textureMapperEditorHolder.setViewportView(h.editor);
-			} else {
-				textureMapperEditorHolder.setViewportView(null);
-			}
+			loadTextureMapper();
 		});
 
 		textureList.setModel(textureListModel);
 
 		textureList.addListSelectionListener(((e) -> {
 			if (!e.getValueIsAdjusting()) {
-				TextureEditHandle h = textureList.getSelectedValue();
-				if (h != null && h.icon != null) {
-					texPreviewHolder.setIcon(h.icon);
-					texPreviewHolder.setText(null);
-				} else {
-					texPreviewHolder.setIcon(null);
-					texPreviewHolder.setText("Preview not available.");
-				}
+				loadTexture();
 			}
 		}));
 
 		addRemoveTexture.bind(textureList, textureListModel, new AddRemoveItemButtons.Handler<UTexture>() {
 			@Override
 			public List<UTexture> add() {
-				List<File> files = callTextureSelect(true);
-				List<UTexture> textures = new ArrayList<>();
-
-				OverwriteMode overwriteMode = OverwriteMode.NOT_SET;
-
-				for (File f : files) {
-					String name = FSUtil.getFileNameWithoutExtension(f.getName());
-					boolean doOverwrite = true;
-					if (textureListModel.findHandleByName(name) != null) {
-						doOverwrite = false;
-
-						switch (overwriteMode) {
-							case NO_TO_ALL:
-							case YES_TO_ALL:
-								break;
-							default:
-								overwriteMode = openOverwriteModeDialog();
-								break;
-						}
-
-						switch (overwriteMode) {
-							case NO:
-							case NO_TO_ALL:
-								doOverwrite = false;
-								break;
-							case YES:
-							case YES_TO_ALL:
-								doOverwrite = true;
-								break;
-						}
-					}
-
-					if (doOverwrite) {
-						//Do not import if name matches
-						UTexture tex = doImportTexture(f);
-
-						if (tex != null) {
-							textures.add(tex);
-						}
-					}
-				}
-				return textures;
+				return addTextures();
 			}
 
 			@Override
@@ -335,14 +209,6 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 		}
 	}
 
-	private static enum OverwriteMode {
-		NOT_SET,
-		YES,
-		NO,
-		NO_TO_ALL,
-		YES_TO_ALL
-	}
-
 	private File savedata_File;
 	private USceneNode savedata_SceneNode;
 
@@ -369,7 +235,140 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 		savedata_SceneNode = node;
 	}
 
+	private void loadShader() {
+		ShaderEditHandle handle = shaderList.getSelectedValue();
+		if (handle != null) {
+			shaderEditorArea.setDocument(handle.document);
+		} else {
+			shaderEditorArea.setDocument(new PlainDocument());
+		}
+	}
+
+	private UShader addShader() {
+		File shaderFile = DemoUIUtility.callShaderSelect(GfxMaterialEditor.this);
+		if (shaderFile != null) {
+			return doImportShader(shaderFile);
+		}
+		return null;
+	}
+
+	private void loadShaderProgram() {
+		ShaderProgramEditHandle handle = shaderProgramList.getSelectedValue();
+		if (handle != null) {
+			shaderSelectF.setModel(handle.shaderSelectF);
+			shaderSelectV.setModel(handle.shaderSelectV);
+		} else {
+			shaderSelectF.setModel(new DefaultComboBoxModel<>());
+			shaderSelectV.setModel(new DefaultComboBoxModel<>());
+		}
+	}
+
+	private UShaderProgram addShaderProgram() {
+		String name = DemoUIUtility.callNameInput(GfxMaterialEditor.this, "Name input", "Enter a name for the shader program");
+		if (name != null) {
+			UShaderProgram program = new UShaderProgram(name, null, null);
+			return program;
+		}
+		return null;
+	}
+
+	private void loadUniform() {
+		UniformEditHandle hnd = uniformList.getSelectedValue();
+		if (hnd != null) {
+			uniformEditorHolder.setViewportView((Component) hnd.getEditor());
+		} else {
+			uniformEditorHolder.setViewportView(null);
+		}
+	}
+
+	private UUniform addUniform() {
+		String[] options = new String[]{"Float", "Integer", "Vector2", "Vector3", "Vector4"};
+
+		int uniformType = JOptionPane.showOptionDialog(
+			GfxMaterialEditor.this,
+			"Select the uniform type",
+			"New shader parameter",
+			JOptionPane.OK_CANCEL_OPTION,
+			JOptionPane.QUESTION_MESSAGE,
+			null,
+			options,
+			"Float"
+		);
+		if (uniformType == JOptionPane.CLOSED_OPTION) {
+			return null;
+		} else {
+			String uniformName = DemoUIUtility.callNameInput(GfxMaterialEditor.this, "New shader parameter", "Enter a name for the uniform");
+
+			if (uniformName != null) {
+				switch (options[uniformType]) {
+					case "Float":
+						return new UUniformFloat(uniformName);
+					case "Integer":
+						return new UUniformInt(uniformName);
+					case "Vector2":
+						return new UUniformVector2(uniformName);
+					case "Vector3":
+						return new UUniformVector3(uniformName);
+					case "Vector4":
+						return new UUniformVector4(uniformName);
+				}
+			}
+		}
+		return null;
+	}
+
+	private void loadTextureMapper() {
+		TextureMapperEditHandle h = (TextureMapperEditHandle) textureMapperBox.getSelectedItem();
+		if (h != null) {
+			textureMapperEditorHolder.setViewportView(h.editor);
+		} else {
+			textureMapperEditorHolder.setViewportView(null);
+		}
+	}
+
+	private UTextureMapper addTextureMapper() {
+		String name = DemoUIUtility.callNameInput(GfxMaterialEditor.this, "New texture mapper", "Enter the name for the sampler uniform");
+		if (name != null) {
+			UTextureMapper mapper = new UTextureMapper();
+			mapper.setShaderVariableName(name);
+			return mapper;
+		}
+		return null;
+	}
+
+	private void loadTexture() {
+		TextureEditHandle h = textureList.getSelectedValue();
+		if (h != null && h.icon != null) {
+			texPreviewHolder.setIcon(h.icon);
+			texPreviewHolder.setText(null);
+		} else {
+			texPreviewHolder.setIcon(null);
+			texPreviewHolder.setText("Preview not available.");
+		}
+	}
+
+	private List<UTexture> addTextures() {
+		List<File> files = DemoUIUtility.callTextureSelect(GfxMaterialEditor.this, true);
+
+		files = filterOverwriteFileList(files, textureListModel);
+
+		List<UTexture> textures = new ArrayList<>();
+
+		for (File texFile : files) {
+			UTexture tex = doImportTexture(texFile);
+			if (tex != null) {
+				textures.add(tex);
+			}
+		}
+
+		return textures;
+	}
+
 	private void reloadMaterial() {
+		loadMaterial();
+	}
+
+	private void loadMaterial() {
 		MaterialEditHandle handle = materialList.getSelectedValue();
 		IEditHandle.saveAll(uniformListModel);
 		uniformList.clearSelection();
@@ -382,13 +381,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 			addRemoveTextureMapper.bind(textureMapperBox, handle.texMapperListModel, new AddRemoveItemButtons.SingleHandler<UTextureMapper>() {
 				@Override
 				public UTextureMapper addSingle() {
-					String name = DemoUIUtility.callNameInput(GfxMaterialEditor.this, "New texture mapper", "Enter the name for the sampler uniform");
-					if (name != null) {
-						UTextureMapper mapper = new UTextureMapper();
-						mapper.setShaderVariableName(name);
-						return mapper;
-					}
-					return null;
+					return addTextureMapper();
 				}
 
 				@Override
@@ -403,14 +396,6 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 			addRemoveTextureMapper.bind((JComboBox) null, null, null);
 		}
 		textureMapperBox.setSelectedIndex(Math.min(0, textureMapperBox.getItemCount() - 1));
-	}
-
-	private List<File> callTextureSelect(boolean multiple) {
-		return DemoUIUtility.callFileSelect(GfxMaterialEditor.this, false, multiple, "Image texture | *.png, *.jpg", "*.dds", ".png", ".jpg", ".dds");
-	}
-
-	private File callShaderSelect() {
-		return DemoUIUtility.callFileSelect(GfxMaterialEditor.this, false, "GLSL Shader | *.vsh, *.fsh", ".vsh", ".fsh");
 	}
 
 	private UTexture doImportTexture(File f) {
@@ -429,6 +414,45 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 			shaderFile.getName().endsWith(".fsh") ? UShaderType.FRAGMENT : UShaderType.VERTEX,
 			new String(FSUtil.readFileToBytes(shaderFile), StandardCharsets.UTF_8)
 		);
+	}
+
+	private List<File> filterOverwriteFileList(List<File> srcFiles, SynchronizedListModel dest) {
+		List<File> outFiles = new ArrayList<>();
+		OverwriteMode overwriteMode = OverwriteMode.NOT_SET;
+
+		for (File f : srcFiles) {
+			String name = FSUtil.getFileNameWithoutExtension(f.getName());
+			boolean doOverwrite = true;
+			if (dest.findHandleByName(name) != null) {
+				doOverwrite = false;
+
+				switch (overwriteMode) {
+					case NO_TO_ALL:
+					case YES_TO_ALL:
+						break;
+					default:
+						overwriteMode = openOverwriteModeDialog();
+						break;
+				}
+
+				switch (overwriteMode) {
+					case NO:
+					case NO_TO_ALL:
+						doOverwrite = false;
+						break;
+					case YES:
+					case YES_TO_ALL:
+						doOverwrite = true;
+						break;
+				}
+			}
+
+			if (doOverwrite) {
+				outFiles.add(f);
+			}
+		}
+
+		return outFiles;
 	}
 
 	/**
@@ -1136,32 +1160,7 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 			TextureEditHandle tex = textureListModel.findHandleByName(baseName + ext);
 			if (tex != null) {
 				mapper.setTexture(tex.tex);
-			} else {
-				System.out.println("texnotfound " + baseName + ext);
 			}
-		}
-	}
-
-	private static class DummyEditHandle implements IEditHandle<UGfxObject> {
-
-		private UGfxObject obj;
-
-		public DummyEditHandle(UGfxObject obj) {
-			this.obj = obj;
-		}
-
-		@Override
-		public UGfxObject getContent() {
-			return obj;
-		}
-
-		@Override
-		public void save() {
-		}
-
-		@Override
-		public String toString() {
-			return obj.getName();
 		}
 	}
 
@@ -1263,19 +1262,23 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 		}
     }//GEN-LAST:event_btnMatSetTurboActionPerformed
 
+	private static <T> void replaceSelected(JList<?> list, SynchronizedListModel<T, ?> model, T object, T newObject) {
+		int idx = model.remove(object);
+		model.add(idx, newObject);
+		list.setSelectedIndex(idx);
+	}
+
     private void btnTexReplaceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTexReplaceActionPerformed
 		TextureEditHandle hnd = textureList.getSelectedValue();
 		if (hnd != null) {
-			List<File> texFile = callTextureSelect(false);
+			List<File> texFile = DemoUIUtility.callTextureSelect(this, false);
 			if (!texFile.isEmpty()) {
 				UTexture tex = doImportTexture(texFile.get(0));
 
 				if (tex != null) {
 					String texName = hnd.tex.getName();
 					tex.renameTo(texName);
-					int idx = textureListModel.remove(hnd.tex);
-					textureListModel.add(idx, tex);
-					textureList.setSelectedIndex(idx);
+					replaceSelected(textureList, textureListModel, hnd.tex, tex);
 				}
 			}
 		}
@@ -1381,42 +1384,21 @@ public class GfxMaterialEditor extends javax.swing.JFrame {
 				}
 			}
 
-			if (scale != 0f) {
-				for (UMesh mesh : savedata_SceneNode.meshes) {
-					ByteBuffer bbuf = mesh.getVBO();
-					int vcount = mesh.getVertexCount();
-					int stride = mesh.getOneVertexSize();
-
-					bbuf.order(ByteOrder.LITTLE_ENDIAN);
-
-					for (int i = 0; i < vcount; i++) {
-						//assume position attribute as first
-						bbuf.position(stride * i);
-						for (int comp = 0; comp < 3; comp++) {
-							bbuf.mark();
-							float v = bbuf.getFloat();
-							bbuf.reset();
-							bbuf.putFloat(v * scale);
-						}
-					}
-				}
-			}
+			VBOScaler.scale(scale, savedata_SceneNode.meshes);
 		}
     }//GEN-LAST:event_btnScaleGeometryActionPerformed
 
     private void btnShaderReplaceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnShaderReplaceActionPerformed
 		ShaderEditHandle hnd = shaderList.getSelectedValue();
 		if (hnd != null) {
-			File shaderFile = callShaderSelect();
+			File shaderFile = DemoUIUtility.callShaderSelect(this);
 			if (shaderFile != null) {
 				UShader sha = doImportShader(shaderFile);
 
 				if (sha != null) {
 					String shaderName = hnd.shader.getName();
 					sha.renameTo(shaderName);
-					int idx = shaderListModel.remove(hnd.shader);
-					shaderListModel.add(idx, sha);
-					shaderList.setSelectedIndex(idx);
+					replaceSelected(shaderList, shaderListModel, hnd.shader, sha);
 				}
 			}
 		}
