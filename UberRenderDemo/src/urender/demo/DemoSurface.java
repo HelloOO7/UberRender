@@ -25,7 +25,7 @@ import urender.scenegraph.UCameraLookAtOrbit;
 
 public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventListener {
 
-	private static final int SUPERSAMPLING_SCALE = 4;
+	private static final int SUPERSAMPLING_SCALE = 1;
 	private static final boolean FIX_RESOLUTION_USE = true;
 	private static final int FIX_RESOLUTION_W = 3840;
 	private static final int FIX_RESOLUTION_H = 2160;
