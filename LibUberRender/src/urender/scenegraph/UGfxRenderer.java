@@ -56,6 +56,8 @@ public abstract class UGfxRenderer {
 	 */
 	protected abstract UUniformList getSystemUniforms();
 
+	public abstract void beginDraw();
+	
 	/**
 	 * Implements a scene draw loop.
 	 *
@@ -78,6 +80,10 @@ public abstract class UGfxRenderer {
 		getGBufferFB().delete(backend);
 	}
 
+	protected void initDrawState() {
+		drawState = new UDrawState();
+	}
+	
 	/**
 	 * Sets up the draw state for a scene to be drawn.
 	 *
@@ -88,7 +94,10 @@ public abstract class UGfxRenderer {
 		if (lightAdapter != null) {
 			lightAdapter.setLights(scene.lights);
 		}
-		drawState = new UDrawState();
+		if (drawState == null) {
+			initDrawState();
+		}
+		drawState.commonUniforms.clear();
 		drawState.commonUniforms.addAll(getSystemUniforms());
 		drawState.commonUniforms.addAll(scene.getSceneUniforms());
 		if (lightAdapter != null) {

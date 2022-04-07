@@ -22,6 +22,7 @@ import urender.demo.perf.IPerfMonitor;
 import urender.engine.UShadingMethod;
 import urender.scenegraph.UGfxRenderer;
 import urender.scenegraph.UCameraLookAtOrbit;
+import urender.scenegraph.UScene;
 
 public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventListener {
 
@@ -138,6 +139,7 @@ public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventList
 		backendIdentity *= 7;
 		backend.setGL(glad.getGL().getGL4(), backendIdentity);
 
+		setVirtualViewport();
 		renderer.changeShadingMethod(UShadingMethod.FORWARD); //setup forward framebuffer
 
 		GL4 gl = glad.getGL().getGL4();
@@ -162,16 +164,22 @@ public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventList
 	public void bindPerfMonitor(IPerfMonitor m) {
 		perfMonitor = m;
 	}
-
-	@Override
-	public void display(GLAutoDrawable glad) {
-		long displayLoopStart = System.nanoTime();
-		
+	
+	private void setVirtualViewport() {
 		int w = FIX_RESOLUTION_USE ? FIX_RESOLUTION_W : (getWidth() * SUPERSAMPLING_SCALE);
 		int h = FIX_RESOLUTION_USE ? FIX_RESOLUTION_H : (getHeight() * SUPERSAMPLING_SCALE);
 
 		backend.viewport(0, 0, w, h);
 		renderer.setAllFramebufferResolution(w, h);
+	}
+
+	@Override
+	public void display(GLAutoDrawable glad) {
+		long displayLoopStart = System.nanoTime();
+		
+		setVirtualViewport();
+		
+		renderer.beginDraw();
 
 		if (rootScene != null) {
 			UCameraLookAtOrbit camera = rootScene.orbitCamera;
@@ -189,6 +197,9 @@ public class DemoSurface extends GLJPanel implements GLAutoDrawable, GLEventList
 			rootScene.setTimeCounter((float) (System.currentTimeMillis() % 86400000));
 
 			renderer.drawScene(rootScene);
+		}
+		else {
+			renderer.drawScene(new UScene());
 		}
 
 		backend.viewport(0, 0, getWidth(), getHeight());

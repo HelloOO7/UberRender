@@ -19,6 +19,7 @@ import urender.engine.shader.UUniformMatrix4;
 import urender.engine.shader.UUniformVector3;
 import urender.g3dio.ugfx.UGfxResource;
 import urender.scenegraph.UDrawSources;
+import urender.scenegraph.UDrawState;
 import urender.scenegraph.UGfxRenderer;
 import urender.scenegraph.ULightAdapter;
 import urender.scenegraph.URenderQueue;
@@ -50,14 +51,14 @@ public class DemoRenderEngine extends UGfxRenderer {
 	//The forward-rendered pass renders directly to this target
 	//The deferred-rendered pass should render to it prior with setting gl_FragDepth to the depth texture value
 	private final URenderTarget rtForward = new URenderTarget(
-		0, 
-		"ForwardSurface", 
-		UFramebufferAttachment.COLOR, 
-		UTextureFormat.RGBA8
+			0,
+			"ForwardSurface",
+			UFramebufferAttachment.COLOR,
+			UTextureFormat.RGBA8
 	);
 	private final UFramebuffer framebufferForward = new UFramebuffer(
-		rtForward, 
-		rtSharedDepth
+			rtForward,
+			rtSharedDepth
 	); //shared depth buffer for both deferred and forward shading
 
 	private TurboLightManager lightMgr = new TurboLightManager();
@@ -130,6 +131,13 @@ public class DemoRenderEngine extends UGfxRenderer {
 	}
 
 	@Override
+	public void beginDraw() {
+		changeShadingMethod(UShadingMethod.FORWARD);
+		clearViewport(backend, false, false);
+		initDrawState();
+	}
+
+	@Override
 	public void drawScene(UScene scene) {
 		beginScene(scene);
 
@@ -139,9 +147,6 @@ public class DemoRenderEngine extends UGfxRenderer {
 		for (UDrawSources drawSources : queue.drawSources()) {
 			drawSources.setup(this);
 		}
-
-		changeShadingMethod(UShadingMethod.FORWARD);
-		clearViewport(backend, false, false);
 
 		int deferredLayerMax = queue.getMaxRenderPriority(UShadingMethod.DEFERRED);
 		for (int layer = 0; layer <= deferredLayerMax; layer++) {
